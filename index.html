@@ -1,1 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f9fafb; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px;}
+        ::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+
+        #chat-input {
+            resize: none;
+            scrollbar-width: none; /* For Firefox */
+        }
+        #chat-input::-webkit-scrollbar {
+            display: none; /* For Chrome, Safari, and Opera */
+        }
+        
+        .message-group {
+            display: flex;
+            gap: 1rem;
+            max-width: 85%;
+            align-items: flex-start;
+        }
+        .message-group.user {
+            align-self: flex-end;
+            flex-direction: row-reverse;
+        }
+        .message-group.bot {
+            align-self: flex-start;
+        }
+        
+        .message-content {
+            padding: 0.75rem 1rem;
+            border-radius: 1.25rem;
+            word-wrap: break-word;
+            line-height: 1.6;
+        }
+        .user .message-content {
+            background-color: #4f46e5;
+            color: white;
+            border-bottom-right-radius: 0.5rem;
+        }
+        .bot .message-content {
+            background-color: #e5e7eb;
+            color: #1f2937;
+            border-bottom-left-radius: 0.5rem;
+        }
+
+        .bot-avatar {
+            flex-shrink: 0;
+            width: 2.5rem; /* 40px */
+            height: 2.5rem; /* 40px */
+            border-radius: 9999px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+        }
+
+        .bot-message-block {
+            border-radius: 1.25rem;
+            overflow: hidden;
+            background-color: #e5e7eb;
+        }
+        .bot-message-block.has-content { padding: 0; }
+        .bot-message-block .content-block { padding: 10px 15px; }
+        .bot-message-block img.content-block { padding: 0; max-width: 100%; display: block; }
+        .bot-message-block .content-button { 
+            display: block; width: 100%; text-align: center;
+            background-color: #f9fafb; border-top: 1px solid #d1d5db;
+            padding: 12px 15px; color: #4f46e5; font-weight: 600;
+            transition: background-color 0.2s;
+        }
+        .bot-message-block .content-button:hover { background-color: #f3f4f6; }
+        .bot-message-block .content-table { font-size: 0.875rem; width: 100%; }
+        .bot-message-block .content-table td, .bot-message-block .content-table th { border: 1px solid #d1d5db; padding: 6px 10px; }
+        .bot-message-block .content-table th { background-color: #f3f4f6; }
+
+        .suggestion-chip {
+            transition: background-color 0.2s;
+        }
+        
+        .typing-indicator span {
+            height: 8px;
+            width: 8px;
+            background-color: #9ca3af;
+            border-radius: 50%;
+            display: inline-block;
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+        .typing-indicator span:nth-of-type(1) { animation-delay: -0.32s; }
+        .typing-indicator span:nth-of-type(2) { animation-delay: -0.16s; }
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1.0); }
+        }
+        
+    </style>
+</head>
+<body class="flex flex-col h-screen">
+    
+    <!-- Main Chat Area -->
+    <main id="chat-container" class="flex-1 overflow-y-auto p-4 md:p-6">
+        <div id="chat-messages" class="max-w-3xl mx-auto flex flex-col space-y-6">
+            <!-- Welcome Screen -->
+            <div id="welcome-screen" class="text-center py-16">
+                <div class="inline-block p-4 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full shadow-sm mb-4">
+                    <i data-lucide="sparkles" class="text-white w-10 h-10"></i>
+                </div>
+                <h1 class="text-4xl md:text-5xl font-bold text-gray-800">Hello!</h1>
+                <p class="text-gray-500 mt-2 text-lg">How can I help you today?</p>
+            </div>
+            <!-- Messages will be injected here -->
+        </div>
+    </main>
+
+    <!-- Input Area -->
+    <footer class="p-4 bg-f9fafb">
+        <div class="max-w-3xl mx-auto">
+            <!-- Suggestion Chips -->
+            <div id="suggestion-chips" class="flex flex-wrap gap-2 mb-3 justify-center">
+                <!-- Chips will be dynamically inserted here -->
+            </div>
+            <!-- Input Form -->
+            <div class="relative flex items-end p-2 bg-gray-100 rounded-2xl shadow-sm border border-gray-200">
+                <textarea id="chat-input" placeholder="Type your message..." class="flex-1 bg-transparent px-4 py-2 border-none focus:outline-none focus:ring-0 text-gray-800" rows="1"></textarea>
+                <button id="send-btn" class="bg-indigo-600 text-white rounded-full p-3 flex-shrink-0 hover:bg-indigo-700 disabled:bg-indigo-300 disabled:cursor-not-allowed ml-2">
+                    <i data-lucide="send" class="w-5 h-5"></i>
+                </button>
+            </div>
+             <p class="text-center text-xs text-gray-400 mt-2">Our AI assistant can make mistakes. Consider checking important information.</p>
+        </div>
+    </footer>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getDatabase, ref, onValue, push, set, update } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
+
+        // IMPORTANT: Use the same Firebase config from your admin dashboard
+        const firebaseConfig = {
+          apiKey: "AIzaSyCICnKBs4Ko8oiOkoB2Jg_QRP8IqqTzmWo",
+          authDomain: "bm-ai-agent.firebaseapp.com",
+          databaseURL: "https://bm-ai-agent-default-rtdb.firebaseio.com",
+          projectId: "bm-ai-agent",
+          storageBucket: "bm-ai-agent.appspot.com",
+          messagingSenderId: "177012558344",
+          appId: "1:177012558344:web:5a0bed843769b90b1d5fbd",
+          measurementId: "G-7S5QDYK17"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        let allFaqs = {};
+
+        const elements = {
+            chatContainer: document.getElementById('chat-container'),
+            chatMessages: document.getElementById('chat-messages'),
+            chatInput: document.getElementById('chat-input'),
+            sendBtn: document.getElementById('send-btn'),
+            welcomeScreen: document.getElementById('welcome-screen'),
+            suggestionChips: document.getElementById('suggestion-chips')
+        };
+        
+        // --- VAST NEW BUILT-IN KNOWLEDGE BASE ---
+        const inbuiltReplies = {
+            "General Knowledge": {
+                "what is the capital of france": "The capital of France is Paris.",
+                "who wrote romeo and juliet": "William Shakespeare wrote 'Romeo and Juliet'.",
+                "what are the primary colors": "The primary colors are red, yellow, and blue.",
+                "how many continents are there": "There are seven continents: Asia, Africa, North America, South America, Antarctica, Europe, and Australia.",
+                "what is the largest planet in our solar system": "Jupiter is the largest planet in our solar system.",
+                "what is the currency of japan": "The currency of Japan is the Yen (JPY).",
+                "who painted the mona lisa": "Leonardo da Vinci painted the Mona Lisa.",
+                "what is the tallest mountain in the world": "Mount Everest is the tallest mountain in the world.",
+                "how many states are in the usa": "There are 50 states in the United States of America.",
+                "what is the chemical symbol for water": "The chemical symbol for water is H2O.",
+                "what is the speed of light": "The speed of light in a vacuum is approximately 299,792 kilometers per second.",
+                "who invented the telephone": "Alexander Graham Bell is widely credited with inventing the telephone.",
+                "what is the main ingredient in guacamole": "The main ingredient in guacamole is avocado."
+            },
+            "Science & Nature": {
+                "why is the sky blue": "The sky appears blue because of a phenomenon called Rayleigh scattering. The Earth's atmosphere scatters shorter-wavelength blue light from the sun more than it scatters red light.",
+                "what is photosynthesis": "Photosynthesis is the process used by plants, algae, and some bacteria to convert light energy into chemical energy, through a process that converts carbon dioxide and water into glucose (sugar) and oxygen.",
+                "what are the states of matter": "The three main states of matter are solid, liquid, and gas. (Plasma is often considered the fourth state).",
+                "how do bees make honey": "Bees make honey by collecting nectar from flowers, which they store in their honey stomachs. Enzymes in their stomachs break down the complex sugars of the nectar into simpler ones. Back at the hive, they pass the nectar to other bees, who eventually deposit it into a honeycomb. The bees then fan the honeycomb with their wings to evaporate excess water, creating the thick substance we know as honey.",
+                "what is gravity": "Gravity is the natural force by which all things with mass or energy—including planets, stars, galaxies, and even light—are brought toward (or gravitate toward) one another.",
+                "what causes seasons": "The seasons are caused by the tilt of the Earth's axis (about 23.5 degrees). As the Earth orbits the Sun, different parts of the planet receive the Sun's most direct rays.",
+                "what is dna": "DNA, or deoxyribonucleic acid, is the molecule that contains the genetic code of organisms.",
+                "how does a caterpillar turn into a butterfly": "This process is called metamorphosis. A caterpillar first grows and builds a chrysalis (or pupa). Inside, its body breaks down into a nutrient-rich soup and then completely reorganizes into the structure of a butterfly.",
+                "what is an earthquake": "An earthquake is the shaking of the surface of the Earth resulting from a sudden release of energy in the Earth's lithosphere that creates seismic waves.",
+            },
+            "Technology": {
+                "what is the internet": "The internet is a global network of interconnected computers that allows people to share information and communicate with each other.",
+                "what is an ai": "AI, or Artificial Intelligence, is a branch of computer science that deals with creating smart machines capable of performing tasks that typically require human intelligence.",
+                "what is code": "Code is a set of instructions, written in a programming language, that tells a computer what to do.",
+                "what is a cpu": "The CPU, or Central Processing Unit, is the primary component of a computer that acts as its 'brain,' performing most of the processing and calculations.",
+                "what is bluetooth": "Bluetooth is a wireless technology standard for exchanging data between fixed and mobile devices over short distances.",
+            },
+            "Definitions": {
+                "what is a paradox": "A paradox is a statement that, despite apparently sound reasoning from true premises, leads to a seemingly self-contradictory or logically unacceptable conclusion.",
+                "what is empathy": "Empathy is the capacity to understand or feel what another person is experiencing from within their frame of reference, that is, the capacity to place oneself in another's position.",
+                "what is a procrastinator": "A procrastinator is someone who habitually and intentionally puts off doing something that should be done.",
+                "what is irony": "Irony is a figure of speech in which words are used in such a way that their intended meaning is different from the actual meaning of the words. It can also be a situation that ends up in a way that is contrary to what is expected.",
+            },
+            "Jokes & Fun": {
+                "tell me a joke": [
+                    "Why don't scientists trust atoms? Because they make up everything!",
+                    "What do you call a fake noodle? An Impasta!",
+                    "I'm reading a book on anti-gravity. It's impossible to put down!",
+                    "Why did the scarecrow win an award? Because he was outstanding in his field!",
+                    "What do you get when you cross a snowman and a vampire? Frostbite."
+                ],
+                "what do you think about cats": "They seem to be masters of relaxation and unexpected acrobatics. A fascinating species!",
+                "what do you think about dogs": "They are known for their loyalty and enthusiasm. Truly humanity's best friend."
+            },
+            "Common Conversation": {
+                "how are you": "As an AI, I don't have feelings, but I'm operating at peak efficiency! Thanks for asking. How can I help you?",
+                "who are you": "I'm an AI assistant designed to provide information and answer your questions based on my programming.",
+                "what can you do": "I can answer questions from my knowledge base, solve basic math problems, tell you the time, and even tackle a few riddles. Go ahead and test me!",
+                "thank you": "You're welcome! Is there anything else I can help with?",
+                "thanks": "You're welcome! Let me know if you need anything else.",
+                "bye": "Goodbye! Have a great day.",
+                "hello": "Hello! How can I assist you today?",
+                "hi": "Hi there! What can I do for you?",
+                "what is your name": "I don't have a name. I'm a conversational AI here to assist you.",
+                "are you a robot": "I am a computer program, so in a sense, yes. But I don't have a physical body.",
+                "are you real": "I am a real computer program, running on a server. I'm not a person, though!",
+                "how old are you": "I don't have an age in the human sense. My code is constantly being updated.",
+                "what do you do": "I process the text you send me and try to provide the most relevant and helpful response I can find in my data.",
+                "that was helpful": "I'm glad I could help!",
+                "good job": "Thank you! I'm here to assist.",
+                "i am sad": "I'm sorry to hear that. While I can't understand emotions, I'm here to listen or help you find information if you need it.",
+                "i am happy": "That's wonderful to hear! I'm glad you're having a good day.",
+            }
+        };
+
+        onValue(ref(db, 'faqs'), (snapshot) => {
+            allFaqs = snapshot.val() || {};
+        });
+
+        // --- INTELLIGENT PROCESSING FUNCTIONS ---
+
+        const levenshtein = (s1, s2) => {
+            if (!s1.length) return s2.length;
+            if (!s2.length) return s1.length;
+            const arr = [];
+            for (let i = 0; i <= s2.length; i++) {
+                arr[i] = [i];
+                for (let j = 1; j <= s1.length; j++) {
+                    arr[i][j] = i === 0 ? j : Math.min(
+                        arr[i - 1][j] + 1,
+                        arr[i][j - 1] + 1,
+                        arr[i - 1][j - 1] + (s1[j - 1] === s2[i - 1] ? 0 : 1)
+                    );
+                }
+            }
+            return arr[s2.length][s1.length];
+        };
+
+        const normalizeText = (text) => {
+            return text.toLowerCase().replace(/[^\w\s]/gi, '').trim();
+        };
+
+        // --- DYNAMIC RESPONSE LOGIC ---
+
+        function handleTime(text) {
+            const timeKeywords = ['time', 'date', 'day'];
+            if (timeKeywords.some(keyword => text.includes(keyword))) {
+                 const now = new Date();
+                 if (text.includes('time')) {
+                    const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    return `The current time is ${timeString}.`;
+                 }
+                 if (text.includes('date') || text.includes('day')) {
+                    const dateString = now.toLocaleDateString([], { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+                    return `Today is ${dateString}.`;
+                 }
+            }
+            return null;
+        }
+
+        function handleGreeting(text) {
+            const hour = new Date().getHours();
+            if (text.includes('good morning')) {
+                if (hour >= 5 && hour < 12) return "Good morning to you too!";
+                if (hour >= 12 && hour < 18) return "It's actually the afternoon here, but a very good morning to you!";
+                return "It's evening here, but I appreciate the morning greeting!";
+            }
+            if (text.includes('good afternoon')) {
+                if (hour >= 12 && hour < 18) return "Good afternoon!";
+                return "It's not quite afternoon here, but hello!";
+            }
+            if (text.includes('good evening')) {
+                if (hour >= 18 || hour < 5) return "Good evening to you too!";
+                return "It's not evening here just yet, but hello!";
+            }
+            return null;
+        }
+
+        function handleMath(text) {
+            const mathRegex = /^(?:what is|calculate|compute|solve)\s*([ \d\.\+\-\*\/\(\)]+)$/i;
+            const simpleMathRegex = /^[ \d\.\+\-\*\/\(\)]+$/;
+            
+            let expression = null;
+            const mathMatch = text.match(mathRegex);
+            
+            if (mathMatch && mathMatch[1]) {
+                expression = mathMatch[1];
+            } else if (simpleMathRegex.test(text)) {
+                expression = text;
+            }
+
+            if (expression) {
+                try {
+                    const sanitizedExpression = expression.replace(/[^-()\d/*+.\s]/g, '');
+                    const result = new Function(`return ${sanitizedExpression}`)();
+                    if (isNaN(result) || !isFinite(result)) {
+                         return "That looks like a math problem I can't solve. Please check the format.";
+                    }
+                    return `The answer is ${result}.`;
+                } catch (e) {
+                    return "I encountered an error trying to solve that. Please try a simpler calculation.";
+                }
+            }
+            return null;
+        }
+
+        // --- CORE CHAT FUNCTIONS ---
+
+        function scrollToBottom() {
+            elements.chatContainer.scrollTop = elements.chatContainer.scrollHeight;
+        }
+
+        function showTypingIndicator() {
+            const messageGroup = document.createElement('div');
+            messageGroup.className = 'message-group bot';
+            messageGroup.id = 'typing-indicator';
+
+            const avatar = document.createElement('div');
+            avatar.className = 'bot-avatar';
+            avatar.innerHTML = `<i data-lucide="bot" class="text-white w-6 h-6"></i>`;
+            messageGroup.appendChild(avatar);
+
+            const indicator = document.createElement('div');
+            indicator.className = 'message-content typing-indicator';
+            indicator.innerHTML = '<span></span><span></span><span></span>';
+            messageGroup.appendChild(indicator);
+            
+            elements.chatMessages.appendChild(messageGroup);
+            lucide.createIcons();
+            scrollToBottom();
+        }
+
+        function removeTypingIndicator() {
+            const indicator = document.getElementById('typing-indicator');
+            if(indicator) indicator.remove();
+        }
+
+        function addMessage(sender, contentBlocks) {
+            elements.welcomeScreen.classList.add('hidden');
+            elements.suggestionChips.classList.add('hidden');
+
+            const messageGroup = document.createElement('div');
+            messageGroup.className = `message-group ${sender}`;
+
+            if (sender === 'bot') {
+                const avatar = document.createElement('div');
+                avatar.className = 'bot-avatar';
+                avatar.innerHTML = `<i data-lucide="bot" class="text-white w-6 h-6"></i>`;
+                messageGroup.appendChild(avatar);
+            }
+
+            const messagesContainer = document.createElement('div');
+            messagesContainer.className = 'flex flex-col gap-2 w-full';
+
+            contentBlocks.forEach(block => {
+                messagesContainer.appendChild(block);
+            });
+            
+            messageGroup.appendChild(messagesContainer);
+            elements.chatMessages.appendChild(messageGroup);
+            
+            lucide.createIcons();
+            scrollToBottom();
+        }
+
+        function createBotMessageBlock(blockData) {
+            const botMessageBlock = document.createElement('div');
+            if (typeof blockData === 'string') {
+                botMessageBlock.className = 'message-content';
+                botMessageBlock.textContent = blockData;
+                return botMessageBlock;
+            }
+
+            botMessageBlock.className = 'bot-message-block';
+            let contentHTML = '';
+
+            switch (blockData.type) {
+                case 'text':
+                    botMessageBlock.classList.add('message-content');
+                    botMessageBlock.textContent = blockData.content;
+                    break;
+                case 'image':
+                    contentHTML = `<img src="${blockData.url}" class="content-block" alt="Chatbot Image">`;
+                    botMessageBlock.classList.add('has-content');
+                    botMessageBlock.innerHTML = contentHTML;
+                    break;
+                case 'button':
+                    contentHTML = `<a href="${blockData.url}" target="_blank" rel="noopener noreferrer" class="content-button">${blockData.text}</a>`;
+                    botMessageBlock.classList.add('has-content');
+                    botMessageBlock.innerHTML = contentHTML;
+                    break;
+                case 'table':
+                    let tableHTML = '<table class="content-table content-block">';
+                    const rows = (blockData.content || '').split('\n');
+                    rows.forEach((rowStr, rowIndex) => {
+                        tableHTML += '<tr>';
+                        rowStr.split(',').forEach(cellStr => {
+                            tableHTML += `<${rowIndex === 0 ? 'th' : 'td'}>${cellStr}</${rowIndex === 0 ? 'th' : 'td'}>`;
+                        });
+                        tableHTML += '</tr>';
+                    });
+                    tableHTML += '</table>';
+                    botMessageBlock.classList.add('has-content');
+                    botMessageBlock.innerHTML = tableHTML;
+                    break;
+            }
+            return botMessageBlock;
+        }
+
+        function findAndDisplayReply(userText) {
+            const normalizedUserText = normalizeText(userText);
+            let response = null;
+
+            // Priority 1: Dynamic Handlers (Time, Greeting, Math)
+            response = handleTime(normalizedUserText) || handleGreeting(normalizedUserText) || handleMath(normalizedUserText);
+            if (response) {
+                addMessage('bot', [createBotMessageBlock(response)]);
+                return;
+            }
+            
+            let bestMatch = { key: null, score: 0.75 };
+
+            // Priority 2: Firebase FAQs (custom replies)
+            for (const key in allFaqs) {
+                const faq = allFaqs[key];
+                const normalizedQuestion = normalizeText(faq.question);
+                const distance = levenshtein(normalizedUserText, normalizedQuestion);
+                const score = 1 - distance / Math.max(normalizedUserText.length, normalizedQuestion.length);
+                if (score > bestMatch.score) {
+                    bestMatch = { key, score, source: 'firebase' };
+                }
+            }
+
+            // Priority 3: In-built Knowledge Base
+            for (const category in inbuiltReplies) {
+                for (const question in inbuiltReplies[category]) {
+                    const normalizedQuestion = normalizeText(question);
+                    const distance = levenshtein(normalizedUserText, normalizedQuestion);
+                    const score = 1 - distance / Math.max(normalizedUserText.length, normalizedQuestion.length);
+                    if (score > bestMatch.score) {
+                        bestMatch = { key: question, score, source: 'inbuilt', category };
+                    }
+                }
+            }
+
+            if (bestMatch.key) {
+                if (bestMatch.source === 'firebase') {
+                    const matchedFaq = { ...allFaqs[bestMatch.key], key: bestMatch.key };
+                    const messageBlocks = matchedFaq.reply.map(createBotMessageBlock);
+                    addMessage('bot', messageBlocks);
+                    update(ref(db), {[`faqs/${matchedFaq.key}/views`]: (matchedFaq.views || 0) + 1});
+                } else if (bestMatch.source === 'inbuilt') {
+                    let answer = inbuiltReplies[bestMatch.category][bestMatch.key];
+                    // If the answer is an array (like for jokes), pick one randomly
+                    if (Array.isArray(answer)) {
+                        answer = answer[Math.floor(Math.random() * answer.length)];
+                    }
+                    addMessage('bot', [createBotMessageBlock(answer)]);
+                }
+            } else {
+                const messageBlock = createBotMessageBlock("I'm sorry, I don't have an answer for that. My human colleagues will be notified so they can teach me for next time!");
+                addMessage('bot', [messageBlock]);
+                
+                const unansweredRef = push(ref(db, 'unansweredQuestions'));
+                set(unansweredRef, {
+                    question: userText,
+                    timestamp: new Date().toISOString()
+                });
+            }
+        }
+        
+        function sendMessage(text) {
+            const userText = text || elements.chatInput.value.trim();
+            if (userText === '') return;
+
+            const userMessageBlock = document.createElement('div');
+            userMessageBlock.className = 'message-content';
+            userMessageBlock.textContent = userText;
+            addMessage('user', [userMessageBlock]);
+            
+            if (!text) {
+               elements.chatInput.value = '';
+               elements.chatInput.style.height = 'auto';
+            }
+
+            showTypingIndicator();
+
+            setTimeout(() => {
+                removeTypingIndicator();
+                findAndDisplayReply(userText);
+            }, 1000);
+        }
+        
+        function displayRandomSuggestions() {
+            const allSuggestions = [
+                "What is the capital of Japan?", "Tell me a joke", "What is 1024 / 8?",
+                "Who painted the Mona Lisa?", "Why is the sky blue?", "How are you?",
+                "What time is it?", "What is gravity?", "Are you a robot?"
+            ];
+
+            // Shuffle the array and pick the first 3
+            const shuffled = allSuggestions.sort(() => 0.5 - Math.random());
+            const selected = shuffled.slice(0, 3);
+
+            elements.suggestionChips.innerHTML = ''; // Clear existing chips
+            selected.forEach(text => {
+                const button = document.createElement('button');
+                button.className = 'suggestion-chip bg-gray-200 text-gray-700 text-sm px-4 py-2 rounded-full hover:bg-gray-300';
+                button.textContent = text;
+                elements.suggestionChips.appendChild(button);
+            });
+        }
+
+        elements.sendBtn.addEventListener('click', () => sendMessage());
+        elements.chatInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        elements.chatInput.addEventListener('input', () => {
+            elements.chatInput.style.height = 'auto';
+            elements.chatInput.style.height = (elements.chatInput.scrollHeight) + 'px';
+        });
+
+        elements.suggestionChips.addEventListener('click', (e) => {
+            if (e.target.tagName === 'BUTTON') {
+                sendMessage(e.target.textContent);
+            }
+        });
+
+        // Initialize
+        displayRandomSuggestions();
+        lucide.createIcons();
+
+    </script>
+</body>
+</html>
 
