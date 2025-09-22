@@ -7,26 +7,12 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
     <style>
-        @keyframes gradient-animation {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
-        body { 
-            font-family: 'Inter', sans-serif; 
-            background: linear-gradient(-45deg, #1e3a8a, #4c1d95, #3b0764, #111827);
-            background-size: 400% 400%;
-            animation: gradient-animation 20s ease infinite;
-            color: white;
-            overflow: hidden;
-        }
+        body { font-family: 'Inter', sans-serif; background-color: #f9fafb; }
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.3); border-radius: 4px;}
-        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.5); }
+        ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px;}
+        ::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
 
         #chat-input {
             resize: none;
@@ -35,29 +21,13 @@
         #chat-input::-webkit-scrollbar {
             display: none; /* For Chrome, Safari, and Opera */
         }
-        #chat-input::placeholder {
-            color: rgba(255, 255, 255, 0.7);
-        }
         
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translate3d(0, 30px, 0);
-            }
-            to {
-                opacity: 1;
-                transform: translate3d(0, 0, 0);
-            }
-        }
-
         .message-group {
             display: flex;
             gap: 1rem;
             max-width: 85%;
             align-items: flex-start;
-            animation: fadeInUp 0.6s ease-out forwards;
         }
-
         .message-group.user {
             align-self: flex-end;
             flex-direction: row-reverse;
@@ -73,20 +43,14 @@
             line-height: 1.6;
         }
         .user .message-content {
-            background-color: rgba(79, 70, 229, 0.7);
+            background-color: #4f46e5;
             color: white;
             border-bottom-right-radius: 0.5rem;
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
         }
         .bot .message-content {
-            background-color: rgba(255, 255, 255, 0.15);
-            color: #f9fafb;
+            background-color: #e5e7eb;
+            color: #1f2937;
             border-bottom-left-radius: 0.5rem;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
         }
 
         .bot-avatar {
@@ -98,64 +62,46 @@
             align-items: center;
             justify-content: center;
             background: linear-gradient(135deg, #4f46e5, #7c3aed);
-            box-shadow: 0 0 15px rgba(124, 58, 237, 0.5);
         }
 
         .bot-message-block {
             border-radius: 1.25rem;
             overflow: hidden;
-            background-color: rgba(255, 255, 255, 0.15);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
+            background-color: #e5e7eb;
         }
         .bot-message-block.has-content { padding: 0; }
         .bot-message-block .content-block { padding: 10px 15px; }
+        
+        /* --- MODIFICATION START: Image Adjustment --- */
         .bot-message-block img.content-block { 
             padding: 0; 
             max-width: 100%; 
-            height: auto;
             display: block; 
+            width: 100%;
+            height: auto; /* This maintains the aspect ratio */
+            object-fit: cover; /* This ensures the image covers the area without stretching */
         }
+        /* --- MODIFICATION END: Image Adjustment --- */
+
         .bot-message-block .content-button { 
-            display: flex; 
-            align-items: center;
-            gap: 0.5rem;
-            width: 100%; 
-            text-align: left;
-            background-color: rgba(255, 255, 255, 0.1);
-            border-top: 1px solid rgba(255, 255, 255, 0.2);
-            padding: 12px 15px; 
-            color: #ffffff; 
-            font-weight: 600;
-            transition: all 0.2s;
-            text-decoration: none;
+            display: block; width: 100%; text-align: center;
+            background-color: #f9fafb; border-top: 1px solid #d1d5db;
+            padding: 12px 15px; color: #4f46e5; font-weight: 600;
+            transition: background-color 0.2s;
         }
-        .bot-message-block .content-button:hover { 
-            background-color: rgba(255, 255, 255, 0.2); 
-            padding-left: 20px;
-        }
-        .bot-message-block .content-table { font-size: 0.875rem; width: 100%; border-collapse: collapse; }
-        .bot-message-block .content-table td, .bot-message-block .content-table th { border: 1px solid rgba(255, 255, 255, 0.2); padding: 6px 10px; }
-        .bot-message-block .content-table th { background-color: rgba(255, 255, 255, 0.1); }
+        .bot-message-block .content-button:hover { background-color: #f3f4f6; }
+        .bot-message-block .content-table { font-size: 0.875rem; width: 100%; }
+        .bot-message-block .content-table td, .bot-message-block .content-table th { border: 1px solid #d1d5db; padding: 6px 10px; }
+        .bot-message-block .content-table th { background-color: #f3f4f6; }
 
         .suggestion-chip {
-            transition: all 0.2s;
-            background-color: rgba(255, 255, 255, 0.15);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: white;
-            backdrop-filter: blur(5px);
-        }
-        .suggestion-chip:hover {
-            transform: translateY(-3px) scale(1.05);
-            box-shadow: 0 6px 10px -1px rgb(0 0 0 / 0.1), 0 4px 6px -2px rgb(0 0 0 / 0.1);
-            background-color: rgba(255, 255, 255, 0.25);
+            transition: background-color 0.2s;
         }
         
         .typing-indicator span {
             height: 8px;
             width: 8px;
-            background-color: rgba(255, 255, 255, 0.7);
+            background-color: #9ca3af;
             border-radius: 50%;
             display: inline-block;
             animation: bounce 1.4s infinite ease-in-out both;
@@ -167,30 +113,21 @@
             40% { transform: scale(1.0); }
         }
 
-        .chat-input-container {
-            background-color: rgba(0, 0, 0, 0.2);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+        /* --- MODIFICATION START: Creative Button Style --- */
+        #send-btn {
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
         }
+        #send-btn:hover:not(:disabled) {
+            transform: scale(1.1);
+            box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.4), 0 4px 6px -4px rgba(79, 70, 229, 0.4);
+        }
+        #send-btn:active:not(:disabled) {
+            transform: scale(1.05);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+        }
+        /* --- MODIFICATION END: Creative Button Style --- */
         
-        @keyframes float {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
-        }
-        .welcome-icon {
-            animation: float 3s ease-in-out infinite;
-        }
-        
-        @keyframes send-click {
-            0% { transform: scale(1.1); }
-            50% { transform: scale(0.9); }
-            100% { transform: scale(1.1); }
-        }
-        #send-btn.clicked {
-             animation: send-click 0.3s ease-out;
-        }
-
     </style>
 </head>
 <body class="flex flex-col h-screen">
@@ -200,97 +137,53 @@
         <div id="chat-messages" class="max-w-3xl mx-auto flex flex-col space-y-6">
             <!-- Welcome Screen -->
             <div id="welcome-screen" class="text-center py-16">
-                <div class="welcome-icon inline-block p-4 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full shadow-lg mb-4">
+                <div class="inline-block p-4 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full shadow-sm mb-4">
                     <i data-lucide="sparkles" class="text-white w-10 h-10"></i>
                 </div>
-                <h1 class="text-4xl md:text-5xl font-bold text-white">Greetings!</h1>
-                <p class="text-gray-200 mt-2 text-lg">How may I assist you today?</p>
+                <h1 class="text-4xl md:text-5xl font-bold text-gray-800">Hello!</h1>
+                <p class="text-gray-500 mt-2 text-lg">How can I help you today?</p>
             </div>
             <!-- Messages will be injected here -->
         </div>
     </main>
 
     <!-- Input Area -->
-    <footer class="p-4 bg-transparent">
+    <footer class="p-4 bg-f9fafb">
         <div class="max-w-3xl mx-auto">
             <!-- Suggestion Chips -->
             <div id="suggestion-chips" class="flex flex-wrap gap-2 mb-3 justify-center">
                 <!-- Chips will be dynamically inserted here -->
             </div>
             <!-- Input Form -->
-            <div class="chat-input-container relative flex items-end p-2 rounded-2xl shadow-sm focus-within:ring-2 focus-within:ring-indigo-400 transition-shadow duration-200">
-                <textarea id="chat-input" placeholder="Type your message..." class="flex-1 bg-transparent px-4 py-2 border-none focus:outline-none focus:ring-0 text-white" rows="1"></textarea>
-                <button id="send-btn" class="bg-indigo-600 text-white rounded-full p-3 flex-shrink-0 hover:bg-indigo-700 disabled:bg-indigo-300 disabled:cursor-not-allowed ml-2 transition-transform duration-200 hover:scale-110">
+            <div class="relative flex items-end p-2 bg-gray-100 rounded-2xl shadow-sm border border-gray-200">
+                <textarea id="chat-input" placeholder="Type your message..." class="flex-1 bg-transparent px-4 py-2 border-none focus:outline-none focus:ring-0 text-gray-800" rows="1"></textarea>
+                <button id="send-btn" class="bg-indigo-600 text-white rounded-full p-3 flex-shrink-0 hover:bg-indigo-700 disabled:bg-indigo-300 disabled:cursor-not-allowed ml-2">
                     <i data-lucide="send" class="w-5 h-5"></i>
                 </button>
             </div>
-             <p class="text-center text-xs text-gray-300 mt-2">Our AI assistant can make mistakes. Consider checking important information.</p>
+             <p class="text-center text-xs text-gray-400 mt-2">Our AI assistant can make mistakes. Consider checking important information.</p>
         </div>
     </footer>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, doc, onSnapshot, addDoc, updateDoc, increment, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getDatabase, ref, onValue, push, set, update } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
 
-        // --- SOUND SETUP ---
-        let soundsEnabled = false;
-        const sendSound = new Tone.Synth({
-            oscillator: { type: 'sine' },
-            envelope: { attack: 0.005, decay: 0.1, sustain: 0.3, release: 0.1 }
-        }).toDestination();
+        // IMPORTANT: Use the same Firebase config from your admin dashboard
+        const firebaseConfig = {
+          apiKey: "AIzaSyCICnKBs4Ko8oiOkoB2Jg_QRP8IqqTzmWo",
+          authDomain: "bm-ai-agent.firebaseapp.com",
+          databaseURL: "https://bm-ai-agent-default-rtdb.firebaseio.com",
+          projectId: "bm-ai-agent",
+          storageBucket: "bm-ai-agent.appspot.com",
+          messagingSenderId: "177012558344",
+          appId: "1:177012558344:web:5a0bed843769b90b1d5fbd",
+          measurementId: "G-7S5QDYK17"
+        };
 
-        const receiveSound = new Tone.MembraneSynth({
-            pitchDecay: 0.01,
-            octaves: 6,
-            envelope: { attack: 0.001, decay: 0.2, sustain: 0.01, release: 0.1 }
-        }).toDestination();
-
-        // --- FIREBASE SETUP ---
-        const firebaseConfig = typeof __firebase_config !== 'undefined' 
-            ? JSON.parse(__firebase_config) 
-            : { apiKey: "YOUR_API_KEY", authDomain: "YOUR_AUTH_DOMAIN", projectId: "YOUR_PROJECT_ID" }; // Fallback for local dev
-        
         const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        setLogLevel('debug');
-        
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-chatbot-app';
+        const db = getDatabase(app);
         let allFaqs = {};
-
-        // --- AUTHENTICATION ---
-        async function authenticateUser() {
-            try {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
-                console.log("User authenticated:", auth.currentUser.uid);
-                loadFaqs();
-            } catch (error) {
-                console.error("Authentication failed:", error);
-            }
-        }
-
-        // --- DATA LOADING ---
-        function loadFaqs() {
-            if (!auth.currentUser) {
-                console.log("Waiting for authentication to load FAQs...");
-                return;
-            }
-            const faqsCollection = collection(db, `artifacts/${appId}/public/data/faqs`);
-            onSnapshot(faqsCollection, (snapshot) => {
-                allFaqs = {};
-                snapshot.forEach(doc => {
-                    allFaqs[doc.id] = doc.data();
-                });
-                console.log("FAQs loaded:", allFaqs);
-            }, (error) => {
-                console.error("Error loading FAQs:", error);
-            });
-        }
 
         const elements = {
             chatContainer: document.getElementById('chat-container'),
@@ -301,39 +194,85 @@
             suggestionChips: document.getElementById('suggestion-chips')
         };
         
-        // --- KNOWLEDGE BASE ---
+        // --- VAST NEW BUILT-IN KNOWLEDGE BASE ---
         const inbuiltReplies = {
             "General Knowledge": {
                 "what is the capital of france": "The capital of France is Paris.",
                 "who wrote romeo and juliet": "William Shakespeare wrote 'Romeo and Juliet'.",
                 "what are the primary colors": "The primary colors are red, yellow, and blue.",
+                "how many continents are there": "There are seven continents: Asia, Africa, North America, South America, Antarctica, Europe, and Australia.",
+                "what is the largest planet in our solar system": "Jupiter is the largest planet in our solar system.",
+                "what is the currency of japan": "The currency of Japan is the Yen (JPY).",
+                "who painted the mona lisa": "Leonardo da Vinci painted the Mona Lisa.",
+                "what is the tallest mountain in the world": "Mount Everest is the tallest mountain in the world.",
+                "how many states are in the usa": "There are 50 states in the United States of America.",
+                "what is the chemical symbol for water": "The chemical symbol for water is H2O.",
+                "what is the speed of light": "The speed of light in a vacuum is approximately 299,792 kilometers per second.",
+                "who invented the telephone": "Alexander Graham Bell is widely credited with inventing the telephone.",
+                "what is the main ingredient in guacamole": "The main ingredient in guacamole is avocado."
             },
             "Science & Nature": {
                 "why is the sky blue": "The sky appears blue because of a phenomenon called Rayleigh scattering. The Earth's atmosphere scatters shorter-wavelength blue light from the sun more than it scatters red light.",
-                "what is photosynthesis": "Photosynthesis is the process used by plants to convert light energy into chemical energy.",
+                "what is photosynthesis": "Photosynthesis is the process used by plants, algae, and some bacteria to convert light energy into chemical energy, through a process that converts carbon dioxide and water into glucose (sugar) and oxygen.",
+                "what are the states of matter": "The three main states of matter are solid, liquid, and gas. (Plasma is often considered the fourth state).",
+                "how do bees make honey": "Bees make honey by collecting nectar from flowers, which they store in their honey stomachs. Enzymes in their stomachs break down the complex sugars of the nectar into simpler ones. Back at the hive, they pass the nectar to other bees, who eventually deposit it into a honeycomb. The bees then fan the honeycomb with their wings to evaporate excess water, creating the thick substance we know as honey.",
+                "what is gravity": "Gravity is the natural force by which all things with mass or energy—including planets, stars, galaxies, and even light—are brought toward (or gravitate toward) one another.",
+                "what causes seasons": "The seasons are caused by the tilt of the Earth's axis (about 23.5 degrees). As the Earth orbits the Sun, different parts of the planet receive the Sun's most direct rays.",
+                "what is dna": "DNA, or deoxyribonucleic acid, is the molecule that contains the genetic code of organisms.",
+                "how does a caterpillar turn into a butterfly": "This process is called metamorphosis. A caterpillar first grows and builds a chrysalis (or pupa). Inside, its body breaks down into a nutrient-rich soup and then completely reorganizes into the structure of a butterfly.",
+                "what is an earthquake": "An earthquake is the shaking of the surface of the Earth resulting from a sudden release of energy in the Earth's lithosphere that creates seismic waves.",
             },
             "Technology": {
                 "what is the internet": "The internet is a global network of interconnected computers that allows people to share information and communicate with each other.",
-                "what is an ai": "AI, or Artificial Intelligence, is a branch of computer science that deals with creating smart machines.",
+                "what is an ai": "AI, or Artificial Intelligence, is a branch of computer science that deals with creating smart machines capable of performing tasks that typically require human intelligence.",
+                "what is code": "Code is a set of instructions, written in a programming language, that tells a computer what to do.",
+                "what is a cpu": "The CPU, or Central Processing Unit, is the primary component of a computer that acts as its 'brain,' performing most of the processing and calculations.",
+                "what is bluetooth": "Bluetooth is a wireless technology standard for exchanging data between fixed and mobile devices over short distances.",
+            },
+            "Definitions": {
+                "what is a paradox": "A paradox is a statement that, despite apparently sound reasoning from true premises, leads to a seemingly self-contradictory or logically unacceptable conclusion.",
+                "what is empathy": "Empathy is the capacity to understand or feel what another person is experiencing from within their frame of reference, that is, the capacity to place oneself in another's position.",
+                "what is a procrastinator": "A procrastinator is someone who habitually and intentionally puts off doing something that should be done.",
+                "what is irony": "Irony is a figure of speech in which words are used in such a way that their intended meaning is different from the actual meaning of the words. It can also be a situation that ends up in a way that is contrary to what is expected.",
             },
             "Jokes & Fun": {
                 "tell me a joke": [
                     "Why don't scientists trust atoms? Because they make up everything!",
                     "What do you call a fake noodle? An Impasta!",
-                    "I'm reading a book on anti-gravity. It's impossible to put down!"
+                    "I'm reading a book on anti-gravity. It's impossible to put down!",
+                    "Why did the scarecrow win an award? Because he was outstanding in his field!",
+                    "What do you get when you cross a snowman and a vampire? Frostbite."
                 ],
+                "what do you think about cats": "They seem to be masters of relaxation and unexpected acrobatics. A fascinating species!",
+                "what do you think about dogs": "They are known for their loyalty and enthusiasm. Truly humanity's best friend."
             },
             "Common Conversation": {
-                "how are you": "As an AI, I don't have feelings, but I'm operating at peak efficiency! How can I help you?",
-                "who are you": "I'm an AI assistant designed to provide information and answer your questions.",
-                "what can you do": "I can answer questions from my knowledge base, solve basic math problems, and tell you the time. Go ahead and test me!",
+                "how are you": "As an AI, I don't have feelings, but I'm operating at peak efficiency! Thanks for asking. How can I help you?",
+                "who are you": "I'm an AI assistant designed to provide information and answer your questions based on my programming.",
+                "what can you do": "I can answer questions from my knowledge base, solve basic math problems, tell you the time, and even tackle a few riddles. Go ahead and test me!",
                 "thank you": "You're welcome! Is there anything else I can help with?",
+                "thanks": "You're welcome! Let me know if you need anything else.",
                 "bye": "Goodbye! Have a great day.",
                 "hello": "Hello! How can I assist you today?",
+                "hi": "Hi there! What can I do for you?",
+                "what is your name": "I don't have a name. I'm a conversational AI here to assist you.",
+                "are you a robot": "I am a computer program, so in a sense, yes. But I don't have a physical body.",
+                "are you real": "I am a real computer program, running on a server. I'm not a person, though!",
+                "how old are you": "I don't have an age in the human sense. My code is constantly being updated.",
+                "what do you do": "I process the text you send me and try to provide the most relevant and helpful response I can find in my data.",
+                "that was helpful": "I'm glad I could help!",
+                "good job": "Thank you! I'm here to assist.",
+                "i am sad": "I'm sorry to hear that. While I can't understand emotions, I'm here to listen or help you find information if you need it.",
+                "i am happy": "That's wonderful to hear! I'm glad you're having a good day.",
             }
         };
 
+        onValue(ref(db, 'faqs'), (snapshot) => {
+            allFaqs = snapshot.val() || {};
+        });
+
         // --- INTELLIGENT PROCESSING FUNCTIONS ---
+
         const levenshtein = (s1, s2) => {
             if (!s1.length) return s2.length;
             if (!s2.length) return s1.length;
@@ -356,6 +295,7 @@
         };
 
         // --- DYNAMIC RESPONSE LOGIC ---
+
         function handleTime(text) {
             const timeKeywords = ['time', 'date', 'day'];
             if (timeKeywords.some(keyword => text.includes(keyword))) {
@@ -368,6 +308,24 @@
                      const dateString = now.toLocaleDateString([], { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
                      return `Today is ${dateString}.`;
                  }
+            }
+            return null;
+        }
+
+        function handleGreeting(text) {
+            const hour = new Date().getHours();
+            if (text.includes('good morning')) {
+                if (hour >= 5 && hour < 12) return "Good morning to you too!";
+                if (hour >= 12 && hour < 18) return "It's actually the afternoon here, but a very good morning to you!";
+                return "It's evening here, but I appreciate the morning greeting!";
+            }
+            if (text.includes('good afternoon')) {
+                if (hour >= 12 && hour < 18) return "Good afternoon!";
+                return "It's not quite afternoon here, but hello!";
+            }
+            if (text.includes('good evening')) {
+                if (hour >= 18 || hour < 5) return "Good evening to you too!";
+                return "It's not evening here just yet, but hello!";
             }
             return null;
         }
@@ -401,6 +359,7 @@
         }
 
         // --- CORE CHAT FUNCTIONS ---
+
         function scrollToBottom() {
             elements.chatContainer.scrollTop = elements.chatContainer.scrollHeight;
         }
@@ -455,7 +414,7 @@
             elements.chatMessages.appendChild(messageGroup);
             
             lucide.createIcons();
-            setTimeout(scrollToBottom, 10);
+            scrollToBottom();
         }
 
         function createBotMessageBlock(blockData) {
@@ -480,12 +439,12 @@
                     botMessageBlock.innerHTML = contentHTML;
                     break;
                 case 'button':
-                    contentHTML = `<a href="${blockData.url}" target="_blank" rel="noopener noreferrer" class="content-button"><i data-lucide="arrow-right-circle" class="w-5 h-5"></i><span>${blockData.text}</span></a>`;
+                    contentHTML = `<a href="${blockData.url}" target="_blank" rel="noopener noreferrer" class="content-button">${blockData.text}</a>`;
                     botMessageBlock.classList.add('has-content');
                     botMessageBlock.innerHTML = contentHTML;
                     break;
                 case 'table':
-                    let tableHTML = '<table class="content-table">';
+                    let tableHTML = '<table class="content-table content-block">';
                     const rows = (blockData.content || '').split('\n');
                     rows.forEach((rowStr, rowIndex) => {
                         tableHTML += '<tr>';
@@ -502,11 +461,12 @@
             return botMessageBlock;
         }
 
-        async function findAndDisplayReply(userText) {
+        function findAndDisplayReply(userText) {
             const normalizedUserText = normalizeText(userText);
             let response = null;
 
-            response = handleTime(normalizedUserText) || handleMath(normalizedUserText);
+            // Priority 1: Dynamic Handlers (Time, Greeting, Math)
+            response = handleTime(normalizedUserText) || handleGreeting(normalizedUserText) || handleMath(normalizedUserText);
             if (response) {
                 addMessage('bot', [createBotMessageBlock(response)]);
                 return;
@@ -514,7 +474,7 @@
             
             let bestMatch = { key: null, score: 0.75 };
 
-            // Priority 2: Firebase FAQs
+            // Priority 2: Firebase FAQs (custom replies)
             for (const key in allFaqs) {
                 const faq = allFaqs[key];
                 const normalizedQuestion = normalizeText(faq.question);
@@ -542,10 +502,10 @@
                     const matchedFaq = { ...allFaqs[bestMatch.key], key: bestMatch.key };
                     const messageBlocks = matchedFaq.reply.map(createBotMessageBlock);
                     addMessage('bot', messageBlocks);
-                    const docRef = doc(db, `artifacts/${appId}/public/data/faqs`, matchedFaq.key);
-                    await updateDoc(docRef, { views: increment(1) });
+                    update(ref(db), {[`faqs/${matchedFaq.key}/views`]: (matchedFaq.views || 0) + 1});
                 } else if (bestMatch.source === 'inbuilt') {
                     let answer = inbuiltReplies[bestMatch.category][bestMatch.key];
+                    // If the answer is an array (like for jokes), pick one randomly
                     if (Array.isArray(answer)) {
                         answer = answer[Math.floor(Math.random() * answer.length)];
                     }
@@ -555,8 +515,8 @@
                 const messageBlock = createBotMessageBlock("I'm sorry, I don't have an answer for that. My human colleagues will be notified so they can teach me for next time!");
                 addMessage('bot', [messageBlock]);
                 
-                const unansweredCollection = collection(db, `artifacts/${appId}/public/data/unansweredQuestions`);
-                await addDoc(unansweredCollection, {
+                const unansweredRef = push(ref(db, 'unansweredQuestions'));
+                set(unansweredRef, {
                     question: userText,
                     timestamp: new Date().toISOString()
                 });
@@ -564,16 +524,8 @@
         }
         
         function sendMessage(text) {
-            if (!soundsEnabled) {
-                Tone.start();
-                soundsEnabled = true;
-                console.log('Audio context started');
-            }
-
             const userText = text || elements.chatInput.value.trim();
             if (userText === '') return;
-            
-            sendSound.triggerAttackRelease("C5", "8n", Tone.now());
 
             const userMessageBlock = document.createElement('div');
             userMessageBlock.className = 'message-content';
@@ -589,40 +541,35 @@
 
             setTimeout(() => {
                 removeTypingIndicator();
-                receiveSound.triggerAttackRelease("C4", "8n", Tone.now() + 0.1);
                 findAndDisplayReply(userText);
-            }, 1000 + Math.random() * 500);
+            }, 1000);
         }
         
         function displayRandomSuggestions() {
             const allSuggestions = [
-                "What is the capital of France?", "Tell me a joke", "What is 1024 / 8?",
-                "Who wrote Romeo and Juliet?", "Why is the sky blue?", "How are you?",
-                "What time is it?", "What is photosynthesis?", "Are you a robot?"
+                "What is the capital of Japan?", "Tell me a joke", "What is 1024 / 8?",
+                "Who painted the Mona Lisa?", "Why is the sky blue?", "How are you?",
+                "What time is it?", "What is gravity?", "Are you a robot?"
             ];
 
+            // Shuffle the array and pick the first 3
             const shuffled = allSuggestions.sort(() => 0.5 - Math.random());
             const selected = shuffled.slice(0, 3);
 
-            elements.suggestionChips.innerHTML = '';
+            elements.suggestionChips.innerHTML = ''; // Clear existing chips
             selected.forEach(text => {
                 const button = document.createElement('button');
-                button.className = 'suggestion-chip text-sm px-4 py-2 rounded-full';
+                button.className = 'suggestion-chip bg-gray-200 text-gray-700 text-sm px-4 py-2 rounded-full hover:bg-gray-300';
                 button.textContent = text;
                 elements.suggestionChips.appendChild(button);
             });
         }
 
-        elements.sendBtn.addEventListener('click', () => {
-            elements.sendBtn.classList.add('clicked');
-            setTimeout(() => elements.sendBtn.classList.remove('clicked'), 300);
-            sendMessage();
-        });
-
+        elements.sendBtn.addEventListener('click', () => sendMessage());
         elements.chatInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
-                elements.sendBtn.click();
+                sendMessage();
             }
         });
 
@@ -637,12 +584,10 @@
             }
         });
 
-        // --- INITIALIZATION ---
-        authenticateUser();
+        // Initialize
         displayRandomSuggestions();
         lucide.createIcons();
 
     </script>
 </body>
 </html>
-
