@@ -8,12 +8,12 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f7f8fa; }
+        body { font-family: 'Inter', sans-serif; background-color: #f7f8fc; }
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.2); border-radius: 3px; }
 
-        #toast-container { position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 10000; }
+        #toast-container { position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 10000; display: flex; flex-direction: column; gap: 0.5rem; }
         .toast {
             display: flex; align-items: center; padding: 0.75rem 1.25rem;
             border-radius: 0.5rem; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
@@ -23,22 +23,22 @@
         .toast.success { background-color: #22c55e; color: white; }
         .toast.error { background-color: #ef4444; color: white; }
         
-        #edit-modal { transition: opacity 0.3s ease-in-out; }
+        #edit-modal, #confirm-modal { transition: opacity 0.3s ease-in-out; }
         .modal-content { transition: transform 0.3s ease-in-out; }
 
         .reply-block {
             border: 1px solid #e5e7eb; border-radius: 0.5rem;
             background-color: #ffffff; position: relative;
         }
-        .block-controls { position: absolute; top: 0.5rem; right: 0.5rem; display: flex; gap: 0.25rem; }
+        .block-controls { position: absolute; top: 0.5rem; right: 0.5rem; display: flex; gap: 0.25rem; opacity: 0; transition: opacity 0.2s ease-in-out; }
+        .reply-block:hover .block-controls { opacity: 1; }
         .block-controls button { background-color: #f3f4f6; border-radius: 9999px; padding: 0.25rem; }
         .block-controls button:hover { background-color: #e5e7eb; }
         
-        /* NEW: Interactive Table Styles */
         .interactive-table-wrapper { padding: 0.5rem; }
         .interactive-table { width: 100%; border-collapse: collapse; }
-        .interactive-table th, .interactive-table td { border: 1px solid #d1d5db; padding: 8px; }
-        .interactive-table th { background-color: #f9fafb; }
+        .interactive-table th, .interactive-table td { border: 1px solid #d1d5db; padding: 8px; text-align: left; }
+        .interactive-table th { background-color: #f9fafb; font-weight: 600; }
         .interactive-table [contenteditable=true] { outline: none; }
         .interactive-table [contenteditable=true]:focus { background-color: #eff6ff; box-shadow: 0 0 0 2px #3b82f6; }
         .table-controls { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
@@ -46,90 +46,229 @@
             background-color: #f3f4f6; border: 1px solid #d1d5db; border-radius: 0.25rem;
             padding: 0.25rem 0.75rem; font-size: 0.75rem; font-weight: 500; cursor: pointer;
         }
+
+        /* Advanced UI Styles */
+        #drawer { 
+            transform: translateX(-100%); /* Start hidden on all screens */
+            transition: transform 0.3s ease-in-out; 
+            will-change: transform; 
+        }
+        #drawer.is-open { 
+            transform: translateX(0); 
+        }
+        
+        #drawer-overlay {
+            background-color: rgba(0,0,0,0.5); 
+            opacity: 0; 
+            transition: opacity 0.3s ease-in-out;
+        }
+        #drawer-overlay.is-visible { 
+            opacity: 1; 
+        }
+
+        #main-content { 
+            transition: margin-left 0.3s ease-in-out; 
+        }
+        @media (min-width: 768px) {
+            #main-content.is-expanded { 
+                margin-left: 18rem; /* 288px */ 
+            }
+        }
+
+        .stat-card {
+            background: white; border-radius: 0.75rem; padding: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);
+            border: 1px solid #e5e7eb; display: flex; align-items: center; gap: 1rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.07), 0 4px 6px -2px rgba(0,0,0,0.04);
+        }
+
+        .reply-preview-content { max-height: 150px; overflow: hidden; }
+        .reply-preview-content img { max-height: 80px; border-radius: 0.25rem; border: 1px solid #eee; }
+        .reply-preview-content .preview-table { font-size: 0.75rem; width: auto; }
+        .reply-preview-content .preview-table td, .reply-preview-content .preview-table th { padding: 4px 6px; }
+        .reply-preview-content .preview-button {
+            display: inline-block; background-color: #e5e7eb; padding: 4px 12px;
+            border-radius: 0.25rem; font-size: 0.8rem; font-weight: 500;
+        }
+        
+        .nav-item.active { background-color: #eef2ff; color: #4338ca; font-weight: 600; }
+        .category-item.active { background-color: #eef2ff; color: #4338ca; font-weight: 600; }
+        
+        .faq-card {
+            transition: transform 0.2s, box-shadow 0.2s;
+            border-left-width: 4px;
+        }
+        .faq-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 7px 15px -3px rgba(0,0,0,0.05), 0 4px 6px -2px rgba(0,0,0,0.03);
+        }
+        .custom-checkbox {
+            appearance: none; width: 1.25rem; height: 1.25rem; border: 2px solid #d1d5db;
+            border-radius: 0.25rem; cursor: pointer; transition: background-color 0.2s, border-color 0.2s;
+            display: inline-block; vertical-align: middle; position: relative;
+        }
+        .custom-checkbox:checked {
+            background-color: #4f46e5; border-color: #4f46e5;
+        }
+        .custom-checkbox:checked::after {
+            content: ''; display: block; width: 0.3rem; height: 0.6rem;
+            border: solid white; border-width: 0 2px 2px 0;
+            transform: rotate(45deg); position: absolute; top: 2px; left: 6px;
+        }
+
     </style>
 </head>
-<body class="flex min-h-screen">
+<body class="flex min-h-screen bg-gray-100">
 
     <div id="toast-container"></div>
+    <div id="drawer-overlay" class="fixed inset-0 z-30 hidden md:hidden"></div>
 
-    <!-- Main Dashboard View -->
-    <div class="flex-1 flex flex-col">
+    <!-- Drawer Navigation -->
+    <aside id="drawer" class="bg-white w-72 fixed top-0 left-0 h-full z-40 shadow-lg">
+        <div class="p-6 flex items-center justify-between border-b">
+            <div class="flex items-center space-x-3">
+                 <div class="p-2 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg shadow-md">
+                    <i data-lucide="bot" class="text-white"></i>
+                </div>
+                <h1 class="text-xl font-bold text-gray-900">AI Knowledge Base</h1>
+            </div>
+        </div>
+        <nav class="p-4 overflow-y-auto h-[calc(100vh-69px)]">
+            <h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 px-2">Menu</h2>
+             <ul class="space-y-1 mb-6">
+                 <li><a href="#" data-view="dashboard" class="nav-item flex items-center px-2 py-2 text-sm font-medium rounded-md text-gray-700 hover:bg-indigo-50"><i data-lucide="home" class="w-5 h-5 mr-3"></i>Dashboard</a></li>
+                 <li><a href="#" data-view="training" class="nav-item flex items-center px-2 py-2 text-sm font-medium rounded-md text-gray-700 hover:bg-indigo-50 relative">
+                    <i data-lucide="brain-circuit" class="w-5 h-5 mr-3"></i>Training Center
+                    <span id="training-count-badge" class="absolute right-2 top-1/2 -translate-y-1-2 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center hidden">0</span>
+                </a></li>
+            </ul>
+
+            <h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 px-2">Categories</h2>
+            <ul id="category-list" class="space-y-1"></ul>
+             <div class="mt-4 px-2">
+                 <button id="add-new-category-btn" class="w-full flex items-center justify-center text-sm text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 py-2 rounded-md border-2 border-dashed hover:border-indigo-300 transition-colors">
+                     <i data-lucide="plus" class="w-4 h-4 mr-2"></i>
+                     Add New Category
+                 </button>
+            </div>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <div id="main-content" class="flex-1 flex flex-col">
         <header class="sticky top-0 bg-white/80 backdrop-blur-md shadow-sm z-20">
-            <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div class="mx-auto w-full px-4 sm:px-6 lg:px-8">
                 <div class="flex h-16 items-center justify-between">
-                    <div class="flex items-center space-x-3">
-                         <div class="p-2 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg shadow-md">
-                            <i data-lucide="bot" class="text-white"></i>
-                        </div>
-                        <h1 class="text-xl font-bold text-gray-900">AI Knowledge Base</h1>
-                    </div>
-                    <div class="flex items-center space-x-4">
-                        <select id="category-filter" class="p-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            <option value="all">All Categories</option>
-                        </select>
-                        <button id="add-new-reply-btn" class="flex items-center justify-center bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition shadow hover:shadow-lg">
-                            <i data-lucide="plus" class="w-4 h-4 mr-2"></i>
-                            Add New Reply
+                    <div class="flex items-center">
+                        <button id="menu-btn" class="p-2 rounded-md text-gray-600 hover:bg-gray-100">
+                             <span id="menu-btn-icon-container"><i data-lucide="menu" class="w-6 h-6"></i></span>
                         </button>
                     </div>
+                    <button id="add-new-reply-btn" class="flex items-center justify-center bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-2 px-4 rounded-md hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition shadow-md hover:shadow-lg">
+                        <i data-lucide="plus" class="w-4 h-4 mr-2"></i>
+                        Add New Reply
+                    </button>
                 </div>
             </div>
         </header>
 
         <main class="p-4 sm:p-6 lg:p-8 flex-1">
-             <div id="faq-list" class="space-y-6">
-                <div id="no-faqs-msg" class="text-center text-gray-500 p-6 bg-white rounded-lg shadow-sm border border-gray-200">No replies found.</div>
+            <!-- Dashboard View -->
+            <div id="view-dashboard">
+                <section id="stats-section" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                       <!-- Stats Cards -->
+                    <div class="stat-card">
+                        <div class="p-3 bg-blue-100 rounded-full"><i data-lucide="message-square" class="w-6 h-6 text-blue-600"></i></div>
+                        <div><p class="text-sm text-gray-500">Total Replies</p><p id="total-replies-stat" class="text-2xl font-bold text-gray-800">0</p></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="p-3 bg-green-100 rounded-full"><i data-lucide="layout-grid" class="w-6 h-6 text-green-600"></i></div>
+                        <div><p class="text-sm text-gray-500">Total Categories</p><p id="total-categories-stat" class="text-2xl font-bold text-gray-800">0</p></div>
+                    </div>
+                     <div class="stat-card">
+                        <div class="p-3 bg-purple-100 rounded-full"><i data-lucide="box-select" class="w-6 h-6 text-purple-600"></i></div>
+                        <div><p class="text-sm text-gray-500">Content Blocks</p><p id="total-blocks-stat" class="text-2xl font-bold text-gray-800">0</p></div>
+                    </div>
+                     <div class="stat-card">
+                        <div class="p-3 bg-yellow-100 rounded-full"><i data-lucide="eye" class="w-6 h-6 text-yellow-600"></i></div>
+                        <div><p class="text-sm text-gray-500">Total Views</p><p id="total-views-stat" class="text-2xl font-bold text-gray-800">0</p></div>
+                    </div>
+                </section>
+                <section class="grid grid-cols-1 xl:grid-cols-3 gap-8">
+                     <div class="xl:col-span-2">
+                        <div class="flex flex-col sm:flex-row justify-between sm:items-center mb-4 gap-4">
+                             <h2 id="current-category-title" class="text-2xl font-bold text-gray-800">All Replies</h2>
+                             <div class="relative"><i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"></i><input type="text" id="search-input" placeholder="Search replies..." class="pl-10 pr-4 py-2 w-full sm:w-64 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"></div>
+                        </div>
+                        <div id="bulk-action-bar" class="hidden bg-indigo-50 p-3 rounded-lg mb-4 flex justify-between items-center">
+                            <p class="text-sm font-medium text-indigo-800"><span id="selected-count">0</span> replies selected</p>
+                            <button id="delete-selected-btn" class="bg-red-500 text-white px-3 py-1.5 rounded-md text-sm font-semibold hover:bg-red-600 flex items-center gap-2"><i data-lucide="trash-2" class="w-4 h-4"></i>Delete Selected</button>
+                        </div>
+                         <div id="faq-list" class="space-y-4"></div>
+                     </div>
+                     <div class="xl:col-span-1">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-2xl font-bold text-gray-800">Recent Activity</h2>
+                            <button id="clear-activity-btn" class="text-sm text-gray-500 hover:text-red-600 font-semibold p-1">Clear</button>
+                        </div>
+                        <div id="activity-feed" class="space-y-3 bg-white p-4 rounded-lg shadow-sm border h-full max-h-[600px] overflow-y-auto"></div>
+                     </div>
+                </section>
+            </div>
+            
+            <!-- Training Center View -->
+            <div id="view-training" class="hidden">
+                 <h2 class="text-2xl font-bold text-gray-800 mb-4">Training Center</h2>
+                 <p class="text-gray-600 mb-6">These are questions your chatbot could not answer. Create a reply to train your bot or dismiss them.</p>
+                 <div id="unanswered-questions-list" class="space-y-3"></div>
             </div>
         </main>
     </div>
 
     <!-- Add/Edit Reply Modal -->
     <div id="edit-modal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50 hidden opacity-0">
-        <div class="modal-content w-full max-w-3xl bg-gray-100 rounded-lg shadow-xl max-h-[90vh] flex flex-col transform scale-95">
+         <div class="modal-content w-full max-w-3xl bg-gray-100 rounded-lg shadow-xl max-h-[90vh] flex flex-col transform scale-95">
             <header class="p-4 border-b bg-white rounded-t-lg flex justify-between items-center flex-shrink-0">
                 <h2 id="modal-title" class="text-xl font-bold">Create New Reply</h2>
                 <button id="close-modal-btn"><i data-lucide="x" class="w-6 h-6"></i></button>
             </header>
-            
             <form id="edit-form" class="p-6 space-y-4 overflow-y-auto flex-1">
-                <input type="hidden" id="edit-key">
-                <div>
-                    <label for="edit-question" class="block text-sm font-medium text-gray-700">User's Question</label>
-                    <input type="text" id="edit-question" placeholder="e.g., What are your prices?" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3 text-sm" required>
-                </div>
-                <div>
-                    <label for="edit-category" class="block text-sm font-medium text-gray-700">Category</label>
-                    <div class="flex space-x-2 mt-1">
-                        <select id="edit-category" class="block w-full border-gray-300 rounded-md shadow-sm py-2 px-3 text-sm">
-                        </select>
-                        <button type="button" id="modal-add-category-btn" class="p-2 bg-gray-200 rounded-md hover:bg-gray-300"><i data-lucide="plus" class="w-4 h-4"></i></button>
-                    </div>
-                </div>
-                
+                <input type="hidden" id="edit-key"><input type="hidden" id="training-key">
+                <div><label for="edit-question" class="block text-sm font-medium text-gray-700">User's Question</label><input type="text" id="edit-question" placeholder="e.g., What are your prices?" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3 text-sm focus:ring-indigo-500 focus:border-indigo-500" required></div>
+                <div><label for="edit-category" class="block text-sm font-medium text-gray-700">Category</label><select id="edit-category" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3 text-sm focus:ring-indigo-500 focus:border-indigo-500"></select></div>
                 <h3 class="text-md font-medium text-gray-700 pt-2">Bot's Reply Builder</h3>
-                <div id="reply-builder-container" class="space-y-3">
-                    <!-- Dynamic content blocks will be added here -->
-                </div>
-
-                <div class="flex space-x-2 pt-2">
-                    <button type="button" data-type="text" class="reply-builder-add-btn flex items-center flex-1 justify-center p-2 bg-white border rounded-md text-sm hover:bg-gray-50"><i data-lucide="pilcrow" class="w-4 h-4 mr-2"></i> Add Text</button>
-                    <button type="button" data-type="image" class="reply-builder-add-btn flex items-center flex-1 justify-center p-2 bg-white border rounded-md text-sm hover:bg-gray-50"><i data-lucide="image" class="w-4 h-4 mr-2"></i> Add Image</button>
-                    <button type="button" data-type="button" class="reply-builder-add-btn flex items-center flex-1 justify-center p-2 bg-white border rounded-md text-sm hover:bg-gray-50"><i data-lucide="mouse-pointer-square" class="w-4 h-4 mr-2"></i> Add Button</button>
-                    <button type="button" data-type="table" class="reply-builder-add-btn flex items-center flex-1 justify-center p-2 bg-white border rounded-md text-sm hover:bg-gray-50"><i data-lucide="table" class="w-4 h-4 mr-2"></i> Add Table</button>
+                <div id="reply-builder-container" class="space-y-3"></div>
+                <div class="flex flex-wrap gap-2 pt-2">
+                    <button type="button" data-type="text" class="reply-builder-add-btn flex items-center flex-1 justify-center p-2 bg-white border rounded-md text-sm hover:bg-gray-50 min-w-[120px]"><i data-lucide="pilcrow" class="w-4 h-4 mr-2"></i> Add Text</button>
+                    <button type="button" data-type="image" class="reply-builder-add-btn flex items-center flex-1 justify-center p-2 bg-white border rounded-md text-sm hover:bg-gray-50 min-w-[120px]"><i data-lucide="image" class="w-4 h-4 mr-2"></i> Add Image</button>
+                    <button type="button" data-type="button" class="reply-builder-add-btn flex items-center flex-1 justify-center p-2 bg-white border rounded-md text-sm hover:bg-gray-50 min-w-[120px]"><i data-lucide="mouse-pointer-square" class="w-4 h-4 mr-2"></i> Add Button</button>
+                    <button type="button" data-type="table" class="reply-builder-add-btn flex items-center flex-1 justify-center p-2 bg-white border rounded-md text-sm hover:bg-gray-50 min-w-[120px]"><i data-lucide="table" class="w-4 h-4 mr-2"></i> Add Table</button>
                 </div>
             </form>
-
             <footer class="p-4 bg-white border-t rounded-b-lg flex justify-end space-x-3 flex-shrink-0">
-                <button type="button" id="cancel-edit-btn" class="bg-gray-200 text-gray-800 py-2 px-4 rounded-md">Cancel</button>
-                <button type="submit" form="edit-form" class="bg-blue-600 text-white py-2 px-4 rounded-md">Save Reply</button>
+                <button type="button" id="cancel-edit-btn" class="bg-gray-200 text-gray-800 py-2 px-4 rounded-md hover:bg-gray-300">Cancel</button>
+                <button type="submit" form="edit-form" class="bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700">Save Reply</button>
             </footer>
         </div>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
-        import { getDatabase, ref, onValue, push, set, remove, update } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-database.js";
+    <!-- Confirmation Modal -->
+    <div id="confirm-modal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-[60] hidden opacity-0">
+        <div class="modal-content w-full max-w-sm bg-white rounded-lg shadow-xl p-6 text-center transform scale-95">
+            <h3 id="confirm-title" class="text-lg font-semibold text-gray-800 mb-2">Are you sure?</h3><p id="confirm-text" class="text-gray-600 mb-6">This action cannot be undone.</p>
+            <div class="flex justify-center space-x-4"><button id="confirm-cancel-btn" class="bg-gray-200 text-gray-800 py-2 px-6 rounded-md hover:bg-gray-300">Cancel</button><button id="confirm-ok-btn" class="bg-red-600 text-white py-2 px-6 rounded-md hover:bg-red-700">Delete</button></div>
+        </div>
+    </div>
 
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getDatabase, ref, onValue, push, set, remove, update } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
+
+        // IMPORTANT: Replace with your Firebase project configuration
         const firebaseConfig = {
           apiKey: "AIzaSyCICnKBs4Ko8oiOkoB2Jg_QRP8IqqTzmWo",
           authDomain: "bm-ai-agent.firebaseapp.com",
@@ -144,32 +283,104 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
         let allFaqs = {};
+        let allCategories = {};
+        let unansweredQuestions = {};
+        let currentCategoryFilter = 'all';
+        let selectedReplies = new Set();
         
         const elements = {
-            faqList: document.getElementById('faq-list'), noFaqsMsg: document.getElementById('no-faqs-msg'),
-            categoryFilter: document.getElementById('category-filter'), addNewReplyBtn: document.getElementById('add-new-reply-btn'),
+            faqList: document.getElementById('faq-list'), addNewReplyBtn: document.getElementById('add-new-reply-btn'),
             modal: document.getElementById('edit-modal'), modalTitle: document.getElementById('modal-title'),
             closeModalBtn: document.getElementById('close-modal-btn'), cancelEditBtn: document.getElementById('cancel-edit-btn'),
             editForm: document.getElementById('edit-form'), editKey: document.getElementById('edit-key'),
             editQuestion: document.getElementById('edit-question'), editCategory: document.getElementById('edit-category'),
-            modalAddCategoryBtn: document.getElementById('modal-add-category-btn'),
             replyBuilderContainer: document.getElementById('reply-builder-container'),
+            trainingKey: document.getElementById('training-key'),
+            confirmModal: document.getElementById('confirm-modal'), confirmOkBtn: document.getElementById('confirm-ok-btn'), confirmCancelBtn: document.getElementById('confirm-cancel-btn'),
+            drawer: document.getElementById('drawer'), drawerOverlay: document.getElementById('drawer-overlay'),
+            mainContent: document.getElementById('main-content'), menuBtn: document.getElementById('menu-btn'),
+            menuBtnIconContainer: document.getElementById('menu-btn-icon-container'),
+            categoryList: document.getElementById('category-list'), addNewCategoryBtn: document.getElementById('add-new-category-btn'),
+            totalRepliesStat: document.getElementById('total-replies-stat'), totalCategoriesStat: document.getElementById('total-categories-stat'),
+            totalBlocksStat: document.getElementById('total-blocks-stat'), totalViewsStat: document.getElementById('total-views-stat'),
+            currentCategoryTitle: document.getElementById('current-category-title'), searchInput: document.getElementById('search-input'),
+            views: { dashboard: document.getElementById('view-dashboard'), training: document.getElementById('view-training') },
+            navItems: document.querySelectorAll('.nav-item'),
+            unansweredQuestionsList: document.getElementById('unanswered-questions-list'),
+            trainingCountBadge: document.getElementById('training-count-badge'),
+            activityFeed: document.getElementById('activity-feed'),
+            clearActivityBtn: document.getElementById('clear-activity-btn'),
+            bulkActionBar: document.getElementById('bulk-action-bar'),
+            selectedCount: document.getElementById('selected-count'),
+            deleteSelectedBtn: document.getElementById('delete-selected-btn'),
         };
 
-        function showToast(message, type = 'success') { /* Toast logic */ }
+        // --- UTILITY FUNCTIONS ---
+        function showToast(message, type = 'success') {
+            const toastContainer = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            toastContainer.appendChild(toast);
+            setTimeout(() => toast.classList.add('show'), 10);
+            setTimeout(() => {
+                toast.classList.remove('show');
+                toast.addEventListener('transitionend', () => toast.remove());
+            }, 3000);
+        }
+        
+        const formatTimeAgo = (isoDate) => {
+            if (!isoDate) return '';
+            const date = new Date(isoDate);
+            const seconds = Math.floor((new Date() - date) / 1000);
+            let interval = seconds / 31536000;
+            if (interval > 1) return Math.floor(interval) + " years ago";
+            interval = seconds / 2592000;
+            if (interval > 1) return Math.floor(interval) + " months ago";
+            interval = seconds / 86400;
+            if (interval > 1) return Math.floor(interval) + " days ago";
+            interval = seconds / 3600;
+            if (interval > 1) return Math.floor(interval) + " hours ago";
+            interval = seconds / 60;
+            if (interval > 1) return Math.floor(interval) + " minutes ago";
+            return "just now";
+        };
+
+        function getCategoryColor(categoryName) {
+            const colors = {
+                'General': 'border-gray-400', 'Greetings': 'border-green-400', 'Pricing': 'border-blue-400',
+                'Support': 'border-red-400', 'Features': 'border-purple-400'
+            };
+            if (colors[categoryName]) return colors[categoryName];
+            
+            let hash = 0;
+            for (let i = 0; i < categoryName.length; i++) {
+                hash = categoryName.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            const colorPalette = ['border-pink-400', 'border-yellow-400', 'border-indigo-400', 'border-teal-400'];
+            return colorPalette[Math.abs(hash) % colorPalette.length];
+        }
+
+        function logActivity(action, details) {
+            const logRef = push(ref(db, 'activityLog'));
+            set(logRef, { action, details, timestamp: new Date().toISOString() });
+        }
+
+        // --- MODAL AND DIALOG FUNCTIONS ---
         function openModal(faq = null) {
             elements.editForm.reset();
             elements.replyBuilderContainer.innerHTML = '';
+            elements.trainingKey.value = ''; // Reset training key
             if (faq) {
-                elements.modalTitle.textContent = 'Edit Reply';
-                elements.editKey.value = faq.key;
+                elements.modalTitle.textContent = faq.key ? 'Edit Reply' : 'Create New Reply';
+                elements.editKey.value = faq.key || '';
                 elements.editQuestion.value = faq.question;
                 updateCategorySelect(elements.editCategory, faq.category);
-                faq.reply.forEach(block => addReplyBlock(block.type, block));
+                (faq.reply || []).forEach(block => addReplyBlock(block.type, block));
             } else {
                 elements.modalTitle.textContent = 'Create New Reply';
                 elements.editKey.value = '';
-                updateCategorySelect(elements.editCategory);
+                updateCategorySelect(elements.editCategory, currentCategoryFilter === 'all' ? 'General' : currentCategoryFilter);
                 addReplyBlock('text');
             }
             elements.modal.classList.remove('hidden');
@@ -178,173 +389,461 @@
                 elements.modal.querySelector('.modal-content').classList.remove('scale-95');
             }, 10);
         }
+
         function closeModal() {
             elements.modal.classList.add('opacity-0');
             elements.modal.querySelector('.modal-content').classList.add('scale-95');
             setTimeout(() => elements.modal.classList.add('hidden'), 300);
         }
-        function updateCategorySelect(selectElement, selectedCategory = 'General') {
-            const categories = new Set(['General']);
-            Object.values(allFaqs).forEach(faq => { if(faq.category) categories.add(faq.category) });
-            selectElement.innerHTML = '';
-            categories.forEach(cat => {
-                const option = document.createElement('option');
-                option.value = cat;
-                option.textContent = cat;
-                if(cat === selectedCategory) option.selected = true;
-                selectElement.appendChild(option);
-            });
+        
+        let confirmCallback = null;
+        function showConfirmation(title, text, onConfirm) {
+            document.getElementById('confirm-title').textContent = title;
+            document.getElementById('confirm-text').textContent = text;
+            confirmCallback = onConfirm;
+            elements.confirmModal.classList.remove('hidden');
+            setTimeout(() => {
+                elements.confirmModal.classList.remove('opacity-0');
+                elements.confirmModal.querySelector('.modal-content').classList.remove('scale-95');
+            }, 10);
+        }
+
+        function hideConfirmation() {
+            elements.confirmModal.classList.add('opacity-0');
+            elements.confirmModal.querySelector('.modal-content').classList.add('scale-95');
+            setTimeout(() => {
+                 elements.confirmModal.classList.add('hidden');
+                 confirmCallback = null;
+            }, 300);
         }
         
-        // --- NEW: Interactive Table Logic ---
-        function createInteractiveTable(data = 'Plan,Price\nBasic,$10\nPro,$25') {
-            const wrapper = document.createElement('div');
-            wrapper.className = 'interactive-table-wrapper';
-            const table = document.createElement('table');
-            table.className = 'interactive-table';
-            
-            const rows = data.split('\n');
-            rows.forEach((rowStr, rowIndex) => {
-                const tr = table.insertRow();
-                const cells = rowStr.split(',');
-                cells.forEach(cellStr => {
-                    const cell = (rowIndex === 0) ? tr.insertCell() : tr.insertCell();
-                    cell.innerHTML = cellStr;
-                    cell.setAttribute('contenteditable', 'true');
-                });
-            });
-
-            const controls = document.createElement('div');
-            controls.className = 'table-controls';
-            controls.innerHTML = `
-                <button type="button" class="add-row-btn">+ Add Row</button>
-                <button type="button" class="add-col-btn">+ Add Column</button>`;
-
-            wrapper.appendChild(table);
-            wrapper.appendChild(controls);
-            return wrapper;
+        // --- DATA & STATE MANAGEMENT ---
+        function getCategories() {
+            const defaultCategories = ['General', 'Greetings', 'Pricing', 'Support', 'Features'];
+            const savedCategories = Object.values(allCategories).map(c => c.name);
+            const categoriesFromFaqs = Object.values(allFaqs).map(faq => faq.category);
+            const combined = new Set([...defaultCategories, ...savedCategories, ...categoriesFromFaqs]);
+            return Array.from(combined).filter(Boolean).sort();
         }
 
+        // --- FIREBASE LISTENERS ---
+        onValue(ref(db, 'faqs'), (snapshot) => {
+            allFaqs = snapshot.val() || {};
+            renderDashboard();
+        });
+
+        onValue(ref(db, 'categories'), (snapshot) => {
+            allCategories = snapshot.val() || {};
+            renderCategories();
+        });
+
+        onValue(ref(db, 'unansweredQuestions'), (snapshot) => {
+            unansweredQuestions = snapshot.val() || {};
+            renderUnansweredQuestions();
+            updateTrainingBadge();
+        });
+
+        onValue(ref(db, 'activityLog'), (snapshot) => {
+            const activityLog = snapshot.val() || {};
+            renderActivityLog(activityLog);
+        });
+
+        // --- RENDER FUNCTIONS ---
+        function renderDashboard() {
+            renderCategories();
+            renderFaqs();
+            updateStats();
+        }
+
+        function renderCategories() {
+            elements.categoryList.innerHTML = '';
+            const allItem = document.createElement('li');
+            allItem.innerHTML = `<a href="#" data-category="all" class="category-item flex items-center px-2 py-2 text-sm font-medium rounded-md text-gray-700 hover:bg-indigo-50">All Replies</a>`;
+            elements.categoryList.appendChild(allItem);
+
+            getCategories().forEach(cat => {
+                const li = document.createElement('li');
+                const catKey = Object.keys(allCategories).find(key => allCategories[key].name === cat);
+                
+                li.innerHTML = `<a href="#" data-category="${cat}" class="category-item flex items-center justify-between px-2 py-2 text-sm font-medium rounded-md group text-gray-700 hover:bg-indigo-50">
+                    <span class="truncate">${cat}</span>
+                    ${!['General', 'Greetings', 'Pricing', 'Support', 'Features'].includes(cat) && catKey ? `<button data-key="${catKey}" class="delete-category-btn hidden group-hover:block p-1 hover:bg-red-100 rounded-full flex-shrink-0"><i data-lucide="trash-2" class="w-3 h-3 text-red-500"></i></button>` : ''}
+                </a>`;
+                elements.categoryList.appendChild(li);
+            });
+            
+            document.querySelectorAll('.category-item').forEach(item => {
+                const isDashboardActive = elements.views.dashboard.style.display !== 'none';
+                const isCategoryMatch = item.dataset.category === currentCategoryFilter;
+                item.classList.toggle('active', isDashboardActive && isCategoryMatch);
+             });
+            lucide.createIcons();
+        }
+
+        function renderFaqs() {
+            elements.faqList.innerHTML = '';
+            const searchTerm = elements.searchInput.value.toLowerCase();
+            const faqsToRender = Object.entries(allFaqs).filter(([key, faq]) => {
+                const inCategory = currentCategoryFilter === 'all' || faq.category === currentCategoryFilter;
+                const inSearch = !searchTerm || (faq.question || '').toLowerCase().includes(searchTerm);
+                return inCategory && inSearch;
+            });
+            updateBulkActionBar();
+
+            if (faqsToRender.length === 0) {
+                 elements.faqList.innerHTML = `<div class="text-center text-gray-500 p-6 bg-white rounded-lg shadow-sm border border-gray-200">No replies found for this category.</div>`;
+            } else {
+                 faqsToRender.sort((a, b) => new Date(b[1].lastUpdated) - new Date(a[1].lastUpdated)).forEach(([key, faqData]) => {
+                    elements.faqList.appendChild(renderFaqCard(key, {...faqData, key}));
+                 });
+            }
+            elements.currentCategoryTitle.textContent = currentCategoryFilter === 'all' ? 'All Replies' : `${currentCategoryFilter}`;
+            lucide.createIcons();
+        }
+        
+        function renderUnansweredQuestions() {
+            elements.unansweredQuestionsList.innerHTML = '';
+            const questions = Object.entries(unansweredQuestions);
+            if (questions.length === 0) {
+                elements.unansweredQuestionsList.innerHTML = `<div class="text-center text-gray-500 p-6 bg-white rounded-lg shadow-sm border border-gray-200">No unanswered questions. Great job!</div>`;
+                return;
+            }
+            questions.sort((a,b) => new Date(b[1].timestamp) - new Date(a[1].timestamp)).forEach(([key, value]) => {
+                const card = document.createElement('div');
+                card.className = 'bg-white p-4 rounded-lg border flex flex-col sm:flex-row justify-between sm:items-center gap-3';
+                card.innerHTML = `
+                    <div class="flex-1">
+                        <p class="font-medium text-gray-800">${value.question}</p>
+                        <p class="text-xs text-gray-500 mt-1">${formatTimeAgo(value.timestamp)}</p>
+                    </div>
+                    <div class="flex items-center gap-2 self-end sm:self-center">
+                        <button data-key="${key}" data-question="${value.question}" class="train-reply-btn bg-indigo-100 text-indigo-700 text-sm font-semibold px-3 py-1.5 rounded-md hover:bg-indigo-200">Create Reply</button>
+                        <button data-key="${key}" class="dismiss-question-btn p-2 hover:bg-gray-100 rounded-md"><i data-lucide="x" class="w-5 h-5 text-gray-500"></i></button>
+                    </div>`;
+                elements.unansweredQuestionsList.appendChild(card);
+            });
+            lucide.createIcons();
+        }
+        
+        function renderActivityLog(log) {
+            elements.activityFeed.innerHTML = '';
+            const entries = Object.values(log).sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, 15); // Get latest 15
+
+            if (entries.length === 0) {
+                elements.activityFeed.innerHTML = '<p class="text-sm text-gray-500 text-center py-4">No recent activity.</p>';
+                return;
+            }
+
+            entries.forEach(entry => {
+                const item = document.createElement('div');
+                item.className = 'flex items-start gap-3 pb-3 border-b last:border-b-0';
+                let icon = '';
+                let text = '';
+
+                const details = (entry.details || '').length > 30 ? `${entry.details.substring(0, 30)}...` : entry.details;
+
+                switch(entry.action) {
+                    case 'created_reply': icon = '<i data-lucide="plus-circle" class="w-4 h-4 text-green-500 mt-1"></i>'; text = `Created: <strong class="font-medium">"${details}"</strong>`; break;
+                    case 'updated_reply': icon = '<i data-lucide="edit-3" class="w-4 h-4 text-blue-500 mt-1"></i>'; text = `Updated: <strong class="font-medium">"${details}"</strong>`; break;
+                    case 'deleted_reply': icon = '<i data-lucide="trash-2" class="w-4 h-4 text-red-500 mt-1"></i>'; text = `Deleted: <strong class="font-medium">"${details}"</strong>`; break;
+                    case 'created_category': icon = '<i data-lucide="plus-circle" class="w-4 h-4 text-green-500 mt-1"></i>'; text = `New Category: <strong class="font-medium">"${details}"</strong>`; break;
+                    case 'deleted_category': icon = '<i data-lucide="trash-2" class="w-4 h-4 text-red-500 mt-1"></i>'; text = `Deleted Category: <strong class="font-medium">"${details}"</strong>`; break;
+                    case 'cloned_reply': icon = '<i data-lucide="copy" class="w-4 h-4 text-yellow-500 mt-1"></i>'; text = `Cloned: <strong class="font-medium">"${details}"</strong>`; break;
+                }
+
+                item.innerHTML = `
+                    <div class="flex-shrink-0">${icon}</div>
+                    <div>
+                        <p class="text-sm text-gray-700">${text}</p>
+                        <p class="text-xs text-gray-400">${formatTimeAgo(entry.timestamp)}</p>
+                    </div>
+                `;
+                elements.activityFeed.appendChild(item);
+            });
+            lucide.createIcons();
+        }
+        
+        function updateStats() {
+            const faqs = Object.values(allFaqs);
+            const numReplies = faqs.length;
+            const categories = getCategories();
+            const numCategories = categories.length;
+            const totalBlocks = faqs.reduce((sum, faq) => sum + (faq.reply ? faq.reply.length : 0), 0);
+            const totalViews = faqs.reduce((sum, faq) => sum + (faq.views || 0), 0);
+
+            elements.totalRepliesStat.textContent = numReplies;
+            elements.totalCategoriesStat.textContent = numCategories;
+            elements.totalBlocksStat.textContent = totalBlocks;
+            elements.totalViewsStat.textContent = totalViews;
+        }
+
+        function updateTrainingBadge() {
+            const count = Object.keys(unansweredQuestions).length;
+            if (count > 0) {
+                elements.trainingCountBadge.textContent = count;
+                elements.trainingCountBadge.classList.remove('hidden');
+            } else {
+                elements.trainingCountBadge.classList.add('hidden');
+            }
+        }
+        
+        function switchView(viewName) {
+            Object.values(elements.views).forEach(view => view.classList.add('hidden'));
+            elements.views[viewName].classList.remove('hidden');
+            
+            elements.navItems.forEach(item => {
+                item.classList.toggle('active', item.dataset.view === viewName);
+            });
+
+            if(viewName !== 'dashboard') {
+                 currentCategoryFilter = 'all';
+            }
+            renderCategories(); // To update active states
+        }
+        
+        // --- UI ELEMENT CREATION ---
+        
         function addReplyBlock(type, data = {}) {
             const block = document.createElement('div');
             block.className = 'reply-block p-4 space-y-2';
             block.dataset.type = type;
             let content;
             switch(type) {
-                case 'text':
-                    content = `<textarea class="w-full p-2 border rounded-md text-sm" placeholder="Text content...">${data.content || ''}</textarea>`;
-                    break;
-                case 'image':
-                    content = `<input type="url" class="w-full p-2 border rounded-md text-sm" placeholder="Image URL..." value="${data.url || ''}">`;
-                    break;
-                case 'button':
-                    content = `<input type="text" class="w-full p-2 border rounded-md text-sm mb-2" placeholder="Button Text..." value="${data.text || ''}"><input type="url" class="w-full p-2 border rounded-md text-sm" placeholder="Button Redirect URL..." value="${data.url || ''}">`;
-                    break;
-                case 'table':
-                    const tableWrapper = createInteractiveTable(data.content);
-                    content = tableWrapper.outerHTML;
-                    break;
+                case 'text': content = `<textarea class="w-full p-2 border rounded-md text-sm focus:ring-indigo-500 focus:border-indigo-500" placeholder="Text content...">${data.content || ''}</textarea>`; break;
+                case 'image': content = `<input type="url" class="w-full p-2 border rounded-md text-sm focus:ring-indigo-500 focus:border-indigo-500" placeholder="Image URL..." value="${data.url || ''}">`; break;
+                case 'button': content = `<input type="text" class="w-full p-2 border rounded-md text-sm mb-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Button Text..." value="${data.text || ''}"><input type="url" class="w-full p-2 border rounded-md text-sm focus:ring-indigo-500 focus:border-indigo-500" placeholder="Button Redirect URL..." value="${data.url || ''}">`; break;
+                case 'table': content = createInteractiveTable(data.content).outerHTML; break;
             }
             block.innerHTML = `
                 <label class="text-xs font-semibold text-gray-500 uppercase">${type}</label>
                 ${content}
                 <div class="block-controls">
-                    <button type="button" class="move-up-btn"><i data-lucide="arrow-up" class="w-4 h-4"></i></button>
-                    <button type="button" class="move-down-btn"><i data-lucide="arrow-down" class="w-4 h-4"></i></button>
-                    <button type="button" class="delete-block-btn"><i data-lucide="trash-2" class="w-4 h-4 text-red-500"></i></button>
+                    <button type="button" class="move-up-btn" title="Move Up"><i data-lucide="arrow-up" class="w-4 h-4"></i></button>
+                    <button type="button" class="move-down-btn" title="Move Down"><i data-lucide="arrow-down" class="w-4 h-4"></i></button>
+                    <button type="button" class="delete-block-btn" title="Delete Block"><i data-lucide="trash-2" class="w-4 h-4 text-red-500"></i></button>
                 </div>`;
             elements.replyBuilderContainer.appendChild(block);
             lucide.createIcons();
         }
 
-        function renderFaqs(faqs) {
-            elements.faqList.innerHTML = '';
-            const groupedByCategory = {};
-            const categories = new Set(['General']);
-            for (const key in faqs) {
-                const faq = { ...faqs[key], key };
-                const category = faq.category || 'General';
-                categories.add(category);
-                if (!groupedByCategory[category]) groupedByCategory[category] = [];
-                groupedByCategory[category].push(faq);
-            }
-            elements.categoryFilter.innerHTML = '<option value="all">All Categories</option>';
-            categories.forEach(cat => {
-                const option = document.createElement('option');
-                option.value = cat; option.textContent = cat;
-                elements.categoryFilter.appendChild(option);
+        function createInteractiveTable(data = 'Header 1,Header 2\nCell 1,Cell 2') {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'interactive-table-wrapper';
+            const table = document.createElement('table');
+            table.className = 'interactive-table';
+            
+            const rows = data ? data.split('\n') : [];
+            rows.forEach((rowStr, rowIndex) => {
+                const tr = table.insertRow();
+                const cells = rowStr.split(',');
+                cells.forEach(cellStr => {
+                    const cell = document.createElement(rowIndex === 0 ? 'th' : 'td');
+                    tr.appendChild(cell);
+                    cell.textContent = cellStr.trim();
+                    cell.setAttribute('contenteditable', 'true');
+                });
             });
-            const currentFilter = elements.categoryFilter.value;
-            for (const category in groupedByCategory) {
-                const categoryContainer = document.createElement('div');
-                categoryContainer.className = 'category-group';
-                categoryContainer.dataset.category = category;
-                if (currentFilter !== 'all' && currentFilter !== category) categoryContainer.classList.add('hidden');
-                const header = document.createElement('h3');
-                header.className = 'text-lg font-semibold text-gray-600 mb-2';
-                header.textContent = category;
-                categoryContainer.appendChild(header);
-                groupedByCategory[category].forEach(faq => categoryContainer.appendChild(renderFaqCard(faq.key, faq)));
-                elements.faqList.appendChild(categoryContainer);
-            }
-            if (Object.keys(faqs).length === 0) {
-                elements.faqList.appendChild(elements.noFaqsMsg);
-                elements.noFaqsMsg.style.display = 'block';
-            } else {
-                elements.noFaqsMsg.style.display = 'none';
-            }
-            lucide.createIcons();
+
+            const controls = document.createElement('div');
+            controls.className = 'table-controls';
+            controls.innerHTML = `<button type="button" class="add-row-btn">+ Add Row</button><button type="button" class="add-col-btn">+ Add Column</button>`;
+            wrapper.appendChild(table);
+            wrapper.appendChild(controls);
+            return wrapper;
         }
 
-        function renderFaqCard(key, data) { /* renderFaqCard logic */ return document.createElement('div'); }
-        
-        onValue(ref(db, 'faqs'), (snapshot) => {
-            allFaqs = snapshot.val() || {};
-            // elements.totalFaqsEl.textContent = Object.keys(allFaqs).length; // Temporarily removed for brevity
-            renderFaqs(allFaqs);
+        function renderFaqCard(key, data) {
+            const card = document.createElement('div');
+            card.className = `faq-card bg-white rounded-lg shadow-sm border p-4 flex gap-4 ${getCategoryColor(data.category || 'General')}`;
+            card.dataset.key = key;
+
+            const replyBlocks = data.reply || [];
+            let previewHTML = '<p class="text-gray-500 text-sm">No reply content.</p>';
+
+            if (replyBlocks.length > 0) {
+                const firstBlock = replyBlocks[0];
+                previewHTML = '';
+                switch(firstBlock.type) {
+                    case 'text': previewHTML = `<p class="text-gray-600 text-sm italic">"${(firstBlock.content || '').substring(0, 150)}..."</p>`; break;
+                    case 'image': previewHTML = `<img src="${firstBlock.url}" alt="Image preview" class="max-h-24 rounded border border-gray-200" onerror="this.style.display='none'">`; break;
+                    case 'button': previewHTML = `<span class="preview-button">${firstBlock.text || 'Button'}</span>`; break;
+                    case 'table':
+                        const rows = (firstBlock.content || '').split('\n').slice(0, 3);
+                        let tableHTML = '<table class="preview-table border border-collapse border-gray-300"><tbody>';
+                        rows.forEach((rowStr, rowIndex) => {
+                            tableHTML += '<tr>';
+                            rowStr.split(',').slice(0, 3).forEach(cellStr => {
+                                tableHTML += `<${rowIndex === 0 ? 'th' : 'td'} class="border border-gray-200 p-1">${cellStr}</${rowIndex === 0 ? 'th' : 'td'}>`;
+                            });
+                            tableHTML += '</tr>';
+                        });
+                        tableHTML += '</tbody></table>';
+                        previewHTML = tableHTML;
+                        break;
+                }
+            }
+
+            card.innerHTML = `
+                <div><input type="checkbox" class="custom-checkbox mt-1" data-key="${key}" ${selectedReplies.has(key) ? 'checked' : ''}></div>
+                <div class="flex-1 flex flex-col gap-3">
+                    <div class="flex justify-between items-start">
+                        <div class="flex-1 min-w-0">
+                            <h4 class="font-semibold text-gray-800" title="${data.question}">${data.question}</h4>
+                            <div class="flex items-center flex-wrap text-xs text-gray-500 mt-1 gap-x-3 gap-y-1">
+                                <span><i data-lucide="box" class="inline w-3 h-3 mr-1"></i>${replyBlocks.length} Block${replyBlocks.length !== 1 ? 's' : ''}</span>
+                                <span title="Views"><i data-lucide="eye" class="inline w-3 h-3 mr-1"></i>${data.views || 0}</span>
+                                ${data.lastUpdated ? `<span><i data-lucide="clock" class="inline w-3 h-3 mr-1"></i>${formatTimeAgo(data.lastUpdated)}</span>` : ''}
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-1 flex-shrink-0 ml-2">
+                            <button class="clone-faq-btn p-2 rounded-md hover:bg-gray-100" title="Clone"><i data-lucide="copy" class="w-4 h-4 text-gray-600"></i></button>
+                            <button class="edit-faq-btn p-2 rounded-md hover:bg-gray-100" title="Edit"><i data-lucide="edit" class="w-4 h-4 text-gray-600"></i></button>
+                            <button class="delete-faq-btn p-2 rounded-md hover:bg-red-100" title="Delete"><i data-lucide="trash-2" class="w-4 h-4 text-red-500"></i></button>
+                        </div>
+                    </div>
+                    <div class="reply-preview-content w-full">${previewHTML}</div>
+                </div>`;
+            return card;
+        }
+
+        function updateCategorySelect(selectElement, selectedCategory = 'General') {
+            selectElement.innerHTML = '';
+            getCategories().forEach(cat => {
+                const option = document.createElement('option');
+                option.value = cat;
+                option.textContent = cat;
+                selectElement.appendChild(option);
+            });
+            selectElement.value = selectedCategory;
+        }
+
+        function updateBulkActionBar() {
+            elements.selectedCount.textContent = selectedReplies.size;
+            if (selectedReplies.size > 0) {
+                elements.bulkActionBar.classList.remove('hidden');
+            } else {
+                elements.bulkActionBar.classList.add('hidden');
+            }
+        }
+
+
+        // --- EVENT LISTENERS ---
+        elements.addNewCategoryBtn.addEventListener('click', () => {
+            const newCategory = prompt('Enter new category name:');
+            if (newCategory && newCategory.trim() !== '') {
+                const trimmedCategory = newCategory.trim();
+                if(!getCategories().includes(trimmedCategory)) {
+                    const newCatRef = push(ref(db, 'categories'));
+                    set(newCatRef, { name: trimmedCategory });
+                    logActivity('created_category', trimmedCategory);
+                    showToast(`Category "${trimmedCategory}" created successfully.`);
+                } else {
+                    showToast(`Category "${trimmedCategory}" already exists.`, 'error');
+                }
+            }
         });
         
-        lucide.createIcons();
-        elements.addNewReplyBtn.addEventListener('click', () => openModal());
-        elements.closeModalBtn.addEventListener('click', closeModal);
-        elements.cancelEditBtn.addEventListener('click', closeModal);
-
         elements.editForm.addEventListener('submit', (e) => {
             e.preventDefault();
             const key = elements.editKey.value;
+            const trainingKey = elements.trainingKey.value;
             const question = elements.editQuestion.value.trim();
             const category = elements.editCategory.value;
             const reply = [];
+
             document.querySelectorAll('#reply-builder-container .reply-block').forEach(block => {
                 const type = block.dataset.type;
+                let data = { type };
                 switch(type) {
-                    case 'text': reply.push({ type, content: block.querySelector('textarea').value }); break;
-                    case 'image': reply.push({ type, url: block.querySelector('input').value }); break;
+                    case 'text': data.content = block.querySelector('textarea').value; break;
+                    case 'image': data.url = block.querySelector('input[type=url]').value; break;
                     case 'button':
                         const inputs = block.querySelectorAll('input');
-                        reply.push({ type, text: inputs[0].value, url: inputs[1].value });
+                        data.text = inputs[0].value;
+                        data.url = inputs[1].value;
                         break;
                     case 'table':
                         const table = block.querySelector('.interactive-table');
-                        let tableContent = '';
-                        table.querySelectorAll('tr').forEach((tr, rowIndex) => {
-                            const cells = Array.from(tr.querySelectorAll('td, th')).map(td => td.innerText).join(',');
-                            tableContent += cells + (rowIndex === table.rows.length - 1 ? '' : '\n');
+                        let tableContent = [];
+                        table.querySelectorAll('tr').forEach(tr => {
+                            const cells = Array.from(tr.querySelectorAll('td, th')).map(cell => cell.innerText.replace(/,/g, ' '));
+                            tableContent.push(cells.join(','));
                         });
-                        reply.push({ type, content: tableContent });
+                        data.content = tableContent.join('\n');
                         break;
                 }
+                reply.push(data);
             });
+            
             if (question && category && reply.length > 0) {
-                const data = { question, category, reply };
-                const dbRef = key ? ref(db, `faqs/${key}`) : push(ref(db, 'faqs'));
+                const isUpdate = !!key;
+                const data = { 
+                    question, category, reply, 
+                    lastUpdated: new Date().toISOString(),
+                    views: isUpdate ? (allFaqs[key]?.views || 0) : 0
+                };
+                
+                const dbRef = isUpdate ? ref(db, `faqs/${key}`) : push(ref(db, 'faqs'));
                 set(dbRef, data);
-                showToast(`Reply ${key ? 'updated' : 'added'} successfully!`);
+                logActivity(isUpdate ? 'updated_reply' : 'created_reply', question);
+                showToast(`Reply ${isUpdate ? 'updated' : 'added'} successfully!`);
+                
+                if (trainingKey) {
+                    remove(ref(db, `unansweredQuestions/${trainingKey}`));
+                }
+
                 closeModal();
-            } else { showToast('Please fill all fields.', 'error'); }
+            } else { showToast('Please fill all required fields.', 'error'); }
         });
 
         document.addEventListener('click', (e) => {
+            const navItem = e.target.closest('.nav-item');
+            if (navItem) {
+                e.preventDefault();
+                switchView(navItem.dataset.view);
+                if (window.innerWidth < 768) { toggleDrawer(false); }
+            }
+
+            const categoryItem = e.target.closest('.category-item');
+            if (categoryItem) {
+                 e.preventDefault();
+                 switchView('dashboard');
+                 currentCategoryFilter = categoryItem.dataset.category;
+                 selectedReplies.clear();
+                 renderFaqs();
+                 renderCategories();
+                 if (window.innerWidth < 768) { toggleDrawer(false); }
+            }
+            
+            const trainBtn = e.target.closest('.train-reply-btn');
+            if (trainBtn) {
+                openModal();
+                elements.editQuestion.value = trainBtn.dataset.question;
+                elements.trainingKey.value = trainBtn.dataset.key;
+            }
+
+            const dismissBtn = e.target.closest('.dismiss-question-btn');
+            if (dismissBtn) {
+                const key = dismissBtn.dataset.key;
+                showConfirmation('Dismiss Question?', 'This will permanently remove the question from the training list.', () => {
+                     remove(ref(db, `unansweredQuestions/${key}`));
+                     showToast('Question dismissed.', 'error');
+                });
+            }
+
+            const deleteCategoryBtn = e.target.closest('.delete-category-btn');
+            if (deleteCategoryBtn) {
+                e.preventDefault();
+                e.stopPropagation();
+                const key = deleteCategoryBtn.dataset.key;
+                const categoryName = allCategories[key]?.name;
+                showConfirmation(`Delete "${categoryName}"?`, 'This will delete the category but not the replies within it. You can re-assign them later.', () => {
+                    remove(ref(db, `categories/${key}`));
+                    logActivity('deleted_category', categoryName);
+                    showToast(`Category "${categoryName}" deleted.`, 'error');
+                });
+            }
+
             if (e.target.closest('.reply-builder-add-btn')) { addReplyBlock(e.target.closest('.reply-builder-add-btn').dataset.type); }
             if (e.target.closest('.delete-block-btn')) { e.target.closest('.reply-block').remove(); }
             if (e.target.closest('.move-up-btn')) {
@@ -355,21 +854,33 @@
                 const block = e.target.closest('.reply-block');
                 if(block.nextElementSibling) block.parentElement.insertBefore(block.nextElementSibling, block);
             }
+            if (e.target.closest('.clone-faq-btn')) {
+                const key = e.target.closest('.faq-card').dataset.key;
+                const { key: oldKey, ...faqDataToClone } = allFaqs[key];
+                const newFaqData = {
+                    ...faqDataToClone,
+                    question: `Copy of ${faqDataToClone.question}`
+                };
+                logActivity('cloned_reply', newFaqData.question);
+                openModal(newFaqData);
+            }
             if (e.target.closest('.edit-faq-btn')) {
                 const key = e.target.closest('.faq-card').dataset.key;
                 openModal({ ...allFaqs[key], key });
             }
             if (e.target.closest('.delete-faq-btn')) {
                 const key = e.target.closest('.faq-card').dataset.key;
-                if (confirm('Are you sure you want to permanently delete this reply?')) {
+                const question = allFaqs[key]?.question;
+                showConfirmation('Delete Reply?', 'This reply will be permanently deleted.', () => {
                     remove(ref(db, `faqs/${key}`));
+                    logActivity('deleted_reply', question);
                     showToast('Reply deleted.', 'error');
-                }
+                });
             }
             if (e.target.closest('.add-row-btn')) {
                 const table = e.target.closest('.interactive-table-wrapper').querySelector('table');
                 const newRow = table.insertRow();
-                for(let i = 0; i < table.rows[0].cells.length; i++) {
+                for(let i = 0; i < (table.rows[0]?.cells.length || 1); i++) {
                     const newCell = newRow.insertCell();
                     newCell.contentEditable = true;
                 }
@@ -377,11 +888,99 @@
             if (e.target.closest('.add-col-btn')) {
                 const table = e.target.closest('.interactive-table-wrapper').querySelector('table');
                 table.querySelectorAll('tr').forEach((tr, rowIndex) => {
-                    const newCell = (rowIndex === 0) ? tr.insertCell() : tr.insertCell();
+                    const newCell = document.createElement(rowIndex === 0 ? 'th' : 'td');
                     newCell.contentEditable = true;
+                    tr.appendChild(newCell);
                 });
             }
+
+            const checkbox = e.target.closest('.custom-checkbox');
+            if(checkbox) {
+                const key = checkbox.dataset.key;
+                if (checkbox.checked) {
+                    selectedReplies.add(key);
+                } else {
+                    selectedReplies.delete(key);
+                }
+                updateBulkActionBar();
+            }
         });
+        
+        elements.deleteSelectedBtn.addEventListener('click', () => {
+            showConfirmation(`Delete ${selectedReplies.size} replies?`, 'This action cannot be undone.', () => {
+                const updates = {};
+                selectedReplies.forEach(key => {
+                    updates[`faqs/${key}`] = null;
+                    logActivity('deleted_reply', allFaqs[key]?.question || 'a reply');
+                });
+                update(ref(db), updates);
+                selectedReplies.clear();
+                updateBulkActionBar();
+                showToast('Selected replies deleted.', 'error');
+            });
+        });
+        
+        elements.clearActivityBtn.addEventListener('click', () => {
+             showConfirmation('Clear Activity Log?', 'This will permanently delete all activity records.', () => {
+                remove(ref(db, 'activityLog'));
+                showToast('Activity log cleared.', 'error');
+            });
+        });
+        
+        // --- NEW, ROBUST DRAWER LOGIC ---
+        let isDrawerOpen = false;
+        
+        function setDrawerState(isOpen) {
+            isDrawerOpen = isOpen;
+            const isMobile = window.innerWidth < 768;
+
+            elements.drawer.classList.toggle('is-open', isOpen);
+            
+            if (isMobile) {
+                elements.drawerOverlay.classList.toggle('hidden', !isOpen);
+                if (isOpen) {
+                    setTimeout(() => elements.drawerOverlay.classList.add('is-visible'), 10);
+                } else {
+                    elements.drawerOverlay.classList.remove('is-visible');
+                }
+            } else {
+                elements.mainContent.classList.toggle('is-expanded', isOpen);
+            }
+            
+            elements.menuBtnIconContainer.innerHTML = isOpen ? '<i data-lucide="x" class="w-6 h-6"></i>' : '<i data-lucide="menu" class="w-6 h-6"></i>';
+            lucide.createIcons();
+        }
+
+        function toggleDrawer() {
+            setDrawerState(!isDrawerOpen);
+        }
+
+        // --- Event Listeners & Initial Setup ---
+        elements.menuBtn.addEventListener('click', toggleDrawer);
+        elements.drawerOverlay.addEventListener('click', () => setDrawerState(false));
+        
+        elements.addNewReplyBtn.addEventListener('click', () => openModal());
+        elements.closeModalBtn.addEventListener('click', closeModal);
+        elements.cancelEditBtn.addEventListener('click', closeModal);
+        elements.confirmOkBtn.addEventListener('click', () => {
+            if (confirmCallback) confirmCallback();
+            hideConfirmation();
+        });
+        elements.confirmCancelBtn.addEventListener('click', hideConfirmation);
+        elements.searchInput.addEventListener('input', renderFaqs);
+
+        // Initial Page Load Setup
+        switchView('dashboard');
+        
+        const mediaQuery = window.matchMedia('(min-width: 768px)');
+        function handleScreenChange(e) {
+            setDrawerState(e.matches); // Open on desktop, close on mobile
+        }
+        mediaQuery.addEventListener('change', handleScreenChange);
+        
+        // Initial setup call
+        handleScreenChange(mediaQuery);
+
     </script>
 </body>
 </html>
