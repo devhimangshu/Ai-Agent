@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot Admin Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f7f8fa; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.2); border-radius: 3px; }
+
+        #toast-container { position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 10000; }
+        .toast {
+            display: flex; align-items: center; padding: 0.75rem 1.25rem;
+            border-radius: 0.5rem; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            opacity: 0; transform: translateY(20px); transition: all 0.4s cubic-bezier(0.21, 1.02, 0.73, 1);
+        }
+        .toast.show { opacity: 1; transform: translateY(0); }
+        .toast.success { background-color: #22c55e; color: white; }
+        .toast.error { background-color: #ef4444; color: white; }
+        
+        #edit-modal { transition: opacity 0.3s ease-in-out; }
+        .modal-content { transition: transform 0.3s ease-in-out; }
+
+        .reply-block {
+            border: 1px solid #e5e7eb; border-radius: 0.5rem;
+            background-color: #ffffff; position: relative;
+        }
+        .block-controls { position: absolute; top: 0.5rem; right: 0.5rem; display: flex; gap: 0.25rem; }
+        .block-controls button { background-color: #f3f4f6; border-radius: 9999px; padding: 0.25rem; }
+        .block-controls button:hover { background-color: #e5e7eb; }
+        
+        /* NEW: Interactive Table Styles */
+        .interactive-table-wrapper { padding: 0.5rem; }
+        .interactive-table { width: 100%; border-collapse: collapse; }
+        .interactive-table th, .interactive-table td { border: 1px solid #d1d5db; padding: 8px; }
+        .interactive-table th { background-color: #f9fafb; }
+        .interactive-table [contenteditable=true] { outline: none; }
+        .interactive-table [contenteditable=true]:focus { background-color: #eff6ff; box-shadow: 0 0 0 2px #3b82f6; }
+        .table-controls { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
+        .table-controls button {
+            background-color: #f3f4f6; border: 1px solid #d1d5db; border-radius: 0.25rem;
+            padding: 0.25rem 0.75rem; font-size: 0.75rem; font-weight: 500; cursor: pointer;
+        }
+    </style>
+</head>
+<body class="flex min-h-screen">
+
+    <div id="toast-container"></div>
+
+    <!-- Main Dashboard View -->
+    <div class="flex-1 flex flex-col">
+        <header class="sticky top-0 bg-white/80 backdrop-blur-md shadow-sm z-20">
+            <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                <div class="flex h-16 items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                         <div class="p-2 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg shadow-md">
+                            <i data-lucide="bot" class="text-white"></i>
+                        </div>
+                        <h1 class="text-xl font-bold text-gray-900">AI Knowledge Base</h1>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <select id="category-filter" class="p-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="all">All Categories</option>
+                        </select>
+                        <button id="add-new-reply-btn" class="flex items-center justify-center bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition shadow hover:shadow-lg">
+                            <i data-lucide="plus" class="w-4 h-4 mr-2"></i>
+                            Add New Reply
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="p-4 sm:p-6 lg:p-8 flex-1">
+             <div id="faq-list" class="space-y-6">
+                <div id="no-faqs-msg" class="text-center text-gray-500 p-6 bg-white rounded-lg shadow-sm border border-gray-200">No replies found.</div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Add/Edit Reply Modal -->
+    <div id="edit-modal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50 hidden opacity-0">
+        <div class="modal-content w-full max-w-3xl bg-gray-100 rounded-lg shadow-xl max-h-[90vh] flex flex-col transform scale-95">
+            <header class="p-4 border-b bg-white rounded-t-lg flex justify-between items-center flex-shrink-0">
+                <h2 id="modal-title" class="text-xl font-bold">Create New Reply</h2>
+                <button id="close-modal-btn"><i data-lucide="x" class="w-6 h-6"></i></button>
+            </header>
+            
+            <form id="edit-form" class="p-6 space-y-4 overflow-y-auto flex-1">
+                <input type="hidden" id="edit-key">
+                <div>
+                    <label for="edit-question" class="block text-sm font-medium text-gray-700">User's Question</label>
+                    <input type="text" id="edit-question" placeholder="e.g., What are your prices?" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3 text-sm" required>
+                </div>
+                <div>
+                    <label for="edit-category" class="block text-sm font-medium text-gray-700">Category</label>
+                    <div class="flex space-x-2 mt-1">
+                        <select id="edit-category" class="block w-full border-gray-300 rounded-md shadow-sm py-2 px-3 text-sm">
+                        </select>
+                        <button type="button" id="modal-add-category-btn" class="p-2 bg-gray-200 rounded-md hover:bg-gray-300"><i data-lucide="plus" class="w-4 h-4"></i></button>
+                    </div>
+                </div>
+                
+                <h3 class="text-md font-medium text-gray-700 pt-2">Bot's Reply Builder</h3>
+                <div id="reply-builder-container" class="space-y-3">
+                    <!-- Dynamic content blocks will be added here -->
+                </div>
+
+                <div class="flex space-x-2 pt-2">
+                    <button type="button" data-type="text" class="reply-builder-add-btn flex items-center flex-1 justify-center p-2 bg-white border rounded-md text-sm hover:bg-gray-50"><i data-lucide="pilcrow" class="w-4 h-4 mr-2"></i> Add Text</button>
+                    <button type="button" data-type="image" class="reply-builder-add-btn flex items-center flex-1 justify-center p-2 bg-white border rounded-md text-sm hover:bg-gray-50"><i data-lucide="image" class="w-4 h-4 mr-2"></i> Add Image</button>
+                    <button type="button" data-type="button" class="reply-builder-add-btn flex items-center flex-1 justify-center p-2 bg-white border rounded-md text-sm hover:bg-gray-50"><i data-lucide="mouse-pointer-square" class="w-4 h-4 mr-2"></i> Add Button</button>
+                    <button type="button" data-type="table" class="reply-builder-add-btn flex items-center flex-1 justify-center p-2 bg-white border rounded-md text-sm hover:bg-gray-50"><i data-lucide="table" class="w-4 h-4 mr-2"></i> Add Table</button>
+                </div>
+            </form>
+
+            <footer class="p-4 bg-white border-t rounded-b-lg flex justify-end space-x-3 flex-shrink-0">
+                <button type="button" id="cancel-edit-btn" class="bg-gray-200 text-gray-800 py-2 px-4 rounded-md">Cancel</button>
+                <button type="submit" form="edit-form" class="bg-blue-600 text-white py-2 px-4 rounded-md">Save Reply</button>
+            </footer>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
+        import { getDatabase, ref, onValue, push, set, remove, update } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-database.js";
+
+        const firebaseConfig = {
+          apiKey: "AIzaSyCICnKBs4Ko8oiOkoB2Jg_QRP8IqqTzmWo",
+          authDomain: "bm-ai-agent.firebaseapp.com",
+          databaseURL: "https://bm-ai-agent-default-rtdb.firebaseio.com",
+          projectId: "bm-ai-agent",
+          storageBucket: "bm-ai-agent.appspot.com",
+          messagingSenderId: "177012558344",
+          appId: "1:177012558344:web:5a0bed843769b90b1d5fbd",
+          measurementId: "G-7S5QDYK17"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        let allFaqs = {};
+        
+        const elements = {
+            faqList: document.getElementById('faq-list'), noFaqsMsg: document.getElementById('no-faqs-msg'),
+            categoryFilter: document.getElementById('category-filter'), addNewReplyBtn: document.getElementById('add-new-reply-btn'),
+            modal: document.getElementById('edit-modal'), modalTitle: document.getElementById('modal-title'),
+            closeModalBtn: document.getElementById('close-modal-btn'), cancelEditBtn: document.getElementById('cancel-edit-btn'),
+            editForm: document.getElementById('edit-form'), editKey: document.getElementById('edit-key'),
+            editQuestion: document.getElementById('edit-question'), editCategory: document.getElementById('edit-category'),
+            modalAddCategoryBtn: document.getElementById('modal-add-category-btn'),
+            replyBuilderContainer: document.getElementById('reply-builder-container'),
+        };
+
+        function showToast(message, type = 'success') { /* Toast logic */ }
+        function openModal(faq = null) {
+            elements.editForm.reset();
+            elements.replyBuilderContainer.innerHTML = '';
+            if (faq) {
+                elements.modalTitle.textContent = 'Edit Reply';
+                elements.editKey.value = faq.key;
+                elements.editQuestion.value = faq.question;
+                updateCategorySelect(elements.editCategory, faq.category);
+                faq.reply.forEach(block => addReplyBlock(block.type, block));
+            } else {
+                elements.modalTitle.textContent = 'Create New Reply';
+                elements.editKey.value = '';
+                updateCategorySelect(elements.editCategory);
+                addReplyBlock('text');
+            }
+            elements.modal.classList.remove('hidden');
+            setTimeout(() => {
+                elements.modal.classList.remove('opacity-0');
+                elements.modal.querySelector('.modal-content').classList.remove('scale-95');
+            }, 10);
+        }
+        function closeModal() {
+            elements.modal.classList.add('opacity-0');
+            elements.modal.querySelector('.modal-content').classList.add('scale-95');
+            setTimeout(() => elements.modal.classList.add('hidden'), 300);
+        }
+        function updateCategorySelect(selectElement, selectedCategory = 'General') {
+            const categories = new Set(['General']);
+            Object.values(allFaqs).forEach(faq => { if(faq.category) categories.add(faq.category) });
+            selectElement.innerHTML = '';
+            categories.forEach(cat => {
+                const option = document.createElement('option');
+                option.value = cat;
+                option.textContent = cat;
+                if(cat === selectedCategory) option.selected = true;
+                selectElement.appendChild(option);
+            });
+        }
+        
+        // --- NEW: Interactive Table Logic ---
+        function createInteractiveTable(data = 'Plan,Price\nBasic,$10\nPro,$25') {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'interactive-table-wrapper';
+            const table = document.createElement('table');
+            table.className = 'interactive-table';
+            
+            const rows = data.split('\n');
+            rows.forEach((rowStr, rowIndex) => {
+                const tr = table.insertRow();
+                const cells = rowStr.split(',');
+                cells.forEach(cellStr => {
+                    const cell = (rowIndex === 0) ? tr.insertCell() : tr.insertCell();
+                    cell.innerHTML = cellStr;
+                    cell.setAttribute('contenteditable', 'true');
+                });
+            });
+
+            const controls = document.createElement('div');
+            controls.className = 'table-controls';
+            controls.innerHTML = `
+                <button type="button" class="add-row-btn">+ Add Row</button>
+                <button type="button" class="add-col-btn">+ Add Column</button>`;
+
+            wrapper.appendChild(table);
+            wrapper.appendChild(controls);
+            return wrapper;
+        }
+
+        function addReplyBlock(type, data = {}) {
+            const block = document.createElement('div');
+            block.className = 'reply-block p-4 space-y-2';
+            block.dataset.type = type;
+            let content;
+            switch(type) {
+                case 'text':
+                    content = `<textarea class="w-full p-2 border rounded-md text-sm" placeholder="Text content...">${data.content || ''}</textarea>`;
+                    break;
+                case 'image':
+                    content = `<input type="url" class="w-full p-2 border rounded-md text-sm" placeholder="Image URL..." value="${data.url || ''}">`;
+                    break;
+                case 'button':
+                    content = `<input type="text" class="w-full p-2 border rounded-md text-sm mb-2" placeholder="Button Text..." value="${data.text || ''}"><input type="url" class="w-full p-2 border rounded-md text-sm" placeholder="Button Redirect URL..." value="${data.url || ''}">`;
+                    break;
+                case 'table':
+                    const tableWrapper = createInteractiveTable(data.content);
+                    content = tableWrapper.outerHTML;
+                    break;
+            }
+            block.innerHTML = `
+                <label class="text-xs font-semibold text-gray-500 uppercase">${type}</label>
+                ${content}
+                <div class="block-controls">
+                    <button type="button" class="move-up-btn"><i data-lucide="arrow-up" class="w-4 h-4"></i></button>
+                    <button type="button" class="move-down-btn"><i data-lucide="arrow-down" class="w-4 h-4"></i></button>
+                    <button type="button" class="delete-block-btn"><i data-lucide="trash-2" class="w-4 h-4 text-red-500"></i></button>
+                </div>`;
+            elements.replyBuilderContainer.appendChild(block);
+            lucide.createIcons();
+        }
+
+        function renderFaqs(faqs) {
+            elements.faqList.innerHTML = '';
+            const groupedByCategory = {};
+            const categories = new Set(['General']);
+            for (const key in faqs) {
+                const faq = { ...faqs[key], key };
+                const category = faq.category || 'General';
+                categories.add(category);
+                if (!groupedByCategory[category]) groupedByCategory[category] = [];
+                groupedByCategory[category].push(faq);
+            }
+            elements.categoryFilter.innerHTML = '<option value="all">All Categories</option>';
+            categories.forEach(cat => {
+                const option = document.createElement('option');
+                option.value = cat; option.textContent = cat;
+                elements.categoryFilter.appendChild(option);
+            });
+            const currentFilter = elements.categoryFilter.value;
+            for (const category in groupedByCategory) {
+                const categoryContainer = document.createElement('div');
+                categoryContainer.className = 'category-group';
+                categoryContainer.dataset.category = category;
+                if (currentFilter !== 'all' && currentFilter !== category) categoryContainer.classList.add('hidden');
+                const header = document.createElement('h3');
+                header.className = 'text-lg font-semibold text-gray-600 mb-2';
+                header.textContent = category;
+                categoryContainer.appendChild(header);
+                groupedByCategory[category].forEach(faq => categoryContainer.appendChild(renderFaqCard(faq.key, faq)));
+                elements.faqList.appendChild(categoryContainer);
+            }
+            if (Object.keys(faqs).length === 0) {
+                elements.faqList.appendChild(elements.noFaqsMsg);
+                elements.noFaqsMsg.style.display = 'block';
+            } else {
+                elements.noFaqsMsg.style.display = 'none';
+            }
+            lucide.createIcons();
+        }
+
+        function renderFaqCard(key, data) { /* renderFaqCard logic */ return document.createElement('div'); }
+        
+        onValue(ref(db, 'faqs'), (snapshot) => {
+            allFaqs = snapshot.val() || {};
+            // elements.totalFaqsEl.textContent = Object.keys(allFaqs).length; // Temporarily removed for brevity
+            renderFaqs(allFaqs);
+        });
+        
+        lucide.createIcons();
+        elements.addNewReplyBtn.addEventListener('click', () => openModal());
+        elements.closeModalBtn.addEventListener('click', closeModal);
+        elements.cancelEditBtn.addEventListener('click', closeModal);
+
+        elements.editForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const key = elements.editKey.value;
+            const question = elements.editQuestion.value.trim();
+            const category = elements.editCategory.value;
+            const reply = [];
+            document.querySelectorAll('#reply-builder-container .reply-block').forEach(block => {
+                const type = block.dataset.type;
+                switch(type) {
+                    case 'text': reply.push({ type, content: block.querySelector('textarea').value }); break;
+                    case 'image': reply.push({ type, url: block.querySelector('input').value }); break;
+                    case 'button':
+                        const inputs = block.querySelectorAll('input');
+                        reply.push({ type, text: inputs[0].value, url: inputs[1].value });
+                        break;
+                    case 'table':
+                        const table = block.querySelector('.interactive-table');
+                        let tableContent = '';
+                        table.querySelectorAll('tr').forEach((tr, rowIndex) => {
+                            const cells = Array.from(tr.querySelectorAll('td, th')).map(td => td.innerText).join(',');
+                            tableContent += cells + (rowIndex === table.rows.length - 1 ? '' : '\n');
+                        });
+                        reply.push({ type, content: tableContent });
+                        break;
+                }
+            });
+            if (question && category && reply.length > 0) {
+                const data = { question, category, reply };
+                const dbRef = key ? ref(db, `faqs/${key}`) : push(ref(db, 'faqs'));
+                set(dbRef, data);
+                showToast(`Reply ${key ? 'updated' : 'added'} successfully!`);
+                closeModal();
+            } else { showToast('Please fill all fields.', 'error'); }
+        });
+
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.reply-builder-add-btn')) { addReplyBlock(e.target.closest('.reply-builder-add-btn').dataset.type); }
+            if (e.target.closest('.delete-block-btn')) { e.target.closest('.reply-block').remove(); }
+            if (e.target.closest('.move-up-btn')) {
+                const block = e.target.closest('.reply-block');
+                if(block.previousElementSibling) block.parentElement.insertBefore(block, block.previousElementSibling);
+            }
+            if (e.target.closest('.move-down-btn')) {
+                const block = e.target.closest('.reply-block');
+                if(block.nextElementSibling) block.parentElement.insertBefore(block.nextElementSibling, block);
+            }
+            if (e.target.closest('.edit-faq-btn')) {
+                const key = e.target.closest('.faq-card').dataset.key;
+                openModal({ ...allFaqs[key], key });
+            }
+            if (e.target.closest('.delete-faq-btn')) {
+                const key = e.target.closest('.faq-card').dataset.key;
+                if (confirm('Are you sure you want to permanently delete this reply?')) {
+                    remove(ref(db, `faqs/${key}`));
+                    showToast('Reply deleted.', 'error');
+                }
+            }
+            if (e.target.closest('.add-row-btn')) {
+                const table = e.target.closest('.interactive-table-wrapper').querySelector('table');
+                const newRow = table.insertRow();
+                for(let i = 0; i < table.rows[0].cells.length; i++) {
+                    const newCell = newRow.insertCell();
+                    newCell.contentEditable = true;
+                }
+            }
+            if (e.target.closest('.add-col-btn')) {
+                const table = e.target.closest('.interactive-table-wrapper').querySelector('table');
+                table.querySelectorAll('tr').forEach((tr, rowIndex) => {
+                    const newCell = (rowIndex === 0) ? tr.insertCell() : tr.insertCell();
+                    newCell.contentEditable = true;
+                });
+            }
+        });
+    </script>
+</body>
+</html>
+
