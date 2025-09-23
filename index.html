@@ -1,0 +1,802 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="bot-title">Aether AI</title>
+    <link rel="icon" type="image/png" href="https://html-generator.com/uploads/images/2025/09/23/36475G8PAZQLZ5Z.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- PrismJS for syntax highlighting -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    <style>
+        :root {
+            --background-start: #111827;
+            --background-end: #1f2937;
+            --text-primary: #d1d5db;
+            --text-secondary: #9ca3af;
+            --user-bubble-start: #14b8a6;
+            --user-bubble-end: #06b6d4;
+            --bot-bubble: #374151;
+            --input-background: #1f2937;
+            --accent-glow: rgba(20, 184, 166, 0.4);
+            --code-bg: #282c34;
+        }
+
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background: linear-gradient(180deg, var(--background-start), var(--background-end));
+            color: var(--text-primary);
+        }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px;}
+        ::-webkit-scrollbar-thumb:hover { background: #6b7280; }
+
+        #chat-input {
+            resize: none;
+            scrollbar-width: none;
+        }
+        #chat-input::-webkit-scrollbar {
+            display: none;
+        }
+        
+        .message-group {
+            display: flex;
+            gap: 1rem;
+            max-width: 85%;
+            align-items: flex-start;
+        }
+        .message-group.user {
+            align-self: flex-end;
+            flex-direction: row-reverse;
+        }
+        .message-group.bot {
+            align-self: flex-start;
+        }
+        .message-container {
+            position: relative;
+        }
+
+        .message-container:hover .message-actions {
+            opacity: 1;
+        }
+
+        .message-actions {
+            position: absolute;
+            bottom: -5px;
+            right: -15px;
+            display: flex;
+            gap: 0.5rem;
+            opacity: 0;
+            transition: opacity 0.2s ease-in-out;
+        }
+
+        .action-btn {
+            background-color: var(--background-end);
+            border: 1px solid #4b5563;
+            border-radius: 9999px;
+            padding: 0.25rem;
+            cursor: pointer;
+            color: var(--text-secondary);
+        }
+        .action-btn:hover {
+            background-color: #4b5563;
+            color: var(--text-primary);
+        }
+
+        .message-content {
+            padding: 0.75rem 1rem;
+            border-radius: 1.25rem;
+            word-wrap: break-word;
+            line-height: 1.6;
+            white-space: pre-wrap;
+        }
+        .user .message-content {
+            background: linear-gradient(135deg, var(--user-bubble-start), var(--user-bubble-end));
+            color: white;
+            border-bottom-right-radius: 0.5rem;
+        }
+        .bot .message-content {
+            background-color: var(--bot-bubble);
+            color: var(--text-primary);
+            border-bottom-left-radius: 0.5rem;
+        }
+
+        .bot-avatar {
+            flex-shrink: 0;
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 9999px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--user-bubble-start), var(--user-bubble-end));
+        }
+
+        .bot-message-block {
+            border-radius: 1.25rem;
+            overflow: hidden;
+            background-color: var(--bot-bubble);
+        }
+        .bot-message-block img.content-block { 
+            padding: 0; 
+            max-width: 100%; 
+            display: block; 
+            width: 100%;
+            height: auto;
+            object-fit: cover;
+        }
+
+        .bot-message-block.image-container {
+            max-width: 320px;
+            background-color: transparent;
+        }
+        .bot-message-block.image-container img.content-block {
+            border-radius: 1.25rem;
+        }
+
+        .bot-message-block .content-button { 
+            display: block; width: 100%; text-align: center;
+            background-color: #4b5563; border-top: 1px solid #6b7280;
+            padding: 12px 15px; color: #f9fafb; font-weight: 600;
+            transition: background-color 0.2s;
+        }
+        .bot-message-block .content-button:hover { background-color: #6b7280; }
+        
+        .suggestion-chip {
+            transition: background-color 0.2s, color 0.2s;
+            background-color: rgba(255, 255, 255, 0.05);
+            color: var(--text-secondary);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .suggestion-chip:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+        }
+        
+        .typing-indicator span {
+            height: 8px;
+            width: 8px;
+            background-color: #9ca3af;
+            border-radius: 50%;
+            display: inline-block;
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+        .typing-indicator span:nth-of-type(1) { animation-delay: -0.32s; }
+        .typing-indicator span:nth-of-type(2) { animation-delay: -0.16s; }
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1.0); }
+        }
+
+        #send-btn {
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            background: linear-gradient(135deg, var(--user-bubble-start), var(--user-bubble-end));
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+        }
+        #send-btn:hover:not(:disabled) {
+            transform: scale(1.1);
+            box-shadow: 0 10px 15px -3px var(--accent-glow), 0 4px 6px -4px var(--accent-glow);
+        }
+        #send-btn:active:not(:disabled) {
+            transform: scale(1.05);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+        }
+        
+        .recommendation-btn {
+            background-color: #4b5563;
+            border: none;
+            border-top: 1px solid #6b7280;
+            padding: 12px 15px;
+            width: 100%;
+            text-align: left;
+            color: #f9fafb;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .recommendation-btn:hover {
+            background-color: #6b7280;
+        }
+        .recommendation-btn:first-of-type {
+            border-top: none;
+        }
+        
+        /* Code Block Styles */
+        pre[class*="language-"] {
+            background: var(--code-bg);
+            border-radius: 0.75rem;
+            padding: 1rem;
+            margin: 0;
+            overflow: auto;
+        }
+        .code-container {
+            position: relative;
+            margin: 0.5rem 0;
+        }
+        .code-container .copy-code-btn {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background-color: #4b5563;
+            color: white;
+            border: none;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            opacity: 0.5;
+            transition: opacity 0.2s;
+        }
+        .code-container:hover .copy-code-btn {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="flex flex-col h-screen">
+    
+    <main id="chat-container" class="flex-1 overflow-y-auto p-4 md:p-6">
+        <div id="chat-messages" class="max-w-3xl mx-auto flex flex-col space-y-6">
+            <div id="welcome-screen" class="text-center py-16">
+                <div class="inline-block bg-gray-800 rounded-full mb-6 relative p-2">
+                    <div class="absolute inset-0 bg-gradient-to-br from-teal-400 to-cyan-500 rounded-full blur-xl opacity-50"></div>
+                    <img id="welcome-logo" src="https://html-generator.com/uploads/images/2025/09/23/36475G8PAZQLZ5Z.png" class="w-16 h-16 relative z-10 rounded-full" alt="Company Logo">
+                </div>
+                <h1 id="welcome-header" class="text-4xl md:text-5xl font-bold text-white">Welcome to Aether AI</h1>
+                <p class="text-gray-400 mt-3 text-lg">Your intelligent assistant for any query.</p>
+            </div>
+        </div>
+    </main>
+
+    <footer class="p-4 bg-transparent">
+        <div class="max-w-3xl mx-auto">
+            <div id="stop-generating-container" class="flex justify-center mb-2 hidden">
+                <button id="stop-generating-btn" class="flex items-center gap-2 px-4 py-2 border border-gray-600 rounded-lg text-gray-300 hover:bg-gray-700">
+                    <i data-lucide="square" class="w-4 h-4"></i> Stop generating
+                </button>
+            </div>
+            <div id="suggestion-chips" class="flex flex-wrap gap-2 mb-3 justify-center hidden"></div>
+            <div class="relative flex items-end p-2 bg-gray-900/50 rounded-2xl shadow-sm border border-gray-700 backdrop-blur-sm">
+                <textarea id="chat-input" placeholder="Ask anything..." class="flex-1 bg-transparent px-4 py-2 border-none focus:outline-none focus:ring-0 text-white placeholder-gray-500" rows="1"></textarea>
+                <button id="send-btn" class="text-white rounded-full p-3 flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed ml-2">
+                    <i data-lucide="send" class="w-5 h-5"></i>
+                </button>
+            </div>
+             <p id="disclaimer-text" class="text-center text-xs text-gray-500 mt-2">Aether AI can make mistakes. Consider checking important information.</p>
+        </div>
+    </footer>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getDatabase, ref, onValue, push, set, update } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
+
+        const firebaseConfig = {
+          apiKey: "AIzaSyCICnKBs4Ko8oiOkoB2Jg_QRP8IqqTzmWo",
+          authDomain: "bm-ai-agent.firebaseapp.com",
+          databaseURL: "https://bm-ai-agent-default-rtdb.firebaseio.com",
+          projectId: "bm-ai-agent",
+          storageBucket: "bm-ai-agent.appspot.com",
+          messagingSenderId: "177012558344",
+          appId: "1:177012558344:web:5a0bed843769b90b1d5fbd",
+          measurementId: "G-7S5QDYK17"
+        };
+        
+        // --- BOT PERSONALIZATION CONFIGURATION ---
+        const botConfig = {
+            name: "Blue Minch AI",
+            company: "Blue Minch",
+            location: "Siliguri",
+            avatarIcon: "bot" // You can use any lucide icon name, e.g., 'bot', 'brain-circuit', 'message-circle'
+        };
+        // -----------------------------------------
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        let allFaqs = {};
+        
+        let sessionState = {
+            lastFaqKey: null,
+            isGenerating: false,
+            streamInterval: null,
+        };
+        let initialSuggestionsShown = false;
+
+        const elements = {
+            chatContainer: document.getElementById('chat-container'),
+            chatMessages: document.getElementById('chat-messages'),
+            chatInput: document.getElementById('chat-input'),
+            sendBtn: document.getElementById('send-btn'),
+            welcomeScreen: document.getElementById('welcome-screen'),
+            suggestionChips: document.getElementById('suggestion-chips'),
+            stopGeneratingContainer: document.getElementById('stop-generating-container'),
+            stopGeneratingBtn: document.getElementById('stop-generating-btn'),
+        };
+        
+        const inbuiltReplies = {
+            "General Knowledge": {
+                "what is the capital of france": "The capital of France is Paris.",
+                "what is the capital of japan": "The capital of Japan is Tokyo.",
+                "who wrote romeo and juliet": "William Shakespeare wrote 'Romeo and Juliet'.",
+                "give me a javascript code snippet": "Certainly! Here is a simple JavaScript snippet to log a message to the console:\n```javascript\nfunction greet(name) {\n  console.log(`Hello, ${name}!`);\n}\n\ngreet('World');\n```"
+            },
+            "Common Conversation": {
+                "how are you": "As an AI, I don't have feelings, but I'm operating at peak efficiency! Thanks for asking. How can I help you?",
+                "who are you": `I am ${botConfig.name}, an AI assistant from ${botConfig.company}.`,
+                "what is your name": `You can call me ${botConfig.name}.`,
+                "are you from blue minch": `Yes, I'm an AI assistant developed by the team at ${botConfig.company}.`,
+                "thank you": "You're welcome! Is there anything else I can help with?",
+                "thanks": "You're welcome! Let me know if you need anything else.",
+                "bye": "Goodbye! Have a great day.",
+            }
+        };
+
+        const synonyms = {
+            greetings: ['hello', 'hi', 'hey', 'yo', 'greetings', 'sup', 'what\'s up', 'howdy', 'good morning', 'good afternoon', 'good evening', 'morning', 'afternoon', 'evening', 'good day', 'heya', 'hiya'],
+            farewells: ['bye', 'goodbye', 'see you', 'farewell', 'take care', 'later', 'cheerio'],
+            thanks: ['thanks', 'thank you', 'appreciate it', 'cheers', 'thx'],
+            followUps: ['tell me more', 'why is that', 'why', 'explain that', 'elaborate', 'can you explain more', 'go on']
+        };
+
+        const greetingResponses = [ "Hello! How can I assist you today? 😊", "Hi there! What can I do for you?", "Greetings! How may I help?", "Hey! What's on your mind?", "Hello there! Ask me anything.", "Well, hello there! What can I get for you?", "Hiya! Ready to find some answers?", "Hey, good to see you! What's the plan?", "Howdy! What can Aether AI do for you today?", "Greetings, human! How may I be of service?", "Yo! What's the query?", "Hey! Fire away with your questions.", "Hello! I'm all circuits go. What do you need?", "Hi! What knowledge can I unlock for you?", "Greetings! Let's get started.", "Hey there! What can I help you solve?", "Hi! It's a great day to learn something new. What's your question?", "Hello! Ready to dive in?", "Hey, glad you're here! What can I look up for you?", "Salutations! Your wish is my command.", "What's up? Let me know how I can help.", "Hey! How's it going? I'm here to assist.", "Hi there! The universe of information awaits.", "Hello! Your friendly neighborhood AI at your service.", "Hey! What's the good word?", "Greetings and salutations! What's the mission?", "Hi! I've been waiting for your query.", "Hello! Let's make today productive.", "Hey! Got a question? I've got answers.", "Hi there! Let's see what we can find out.", "Well hello! What brings you to my corner of the internet?", "Hey there, ready to be amazed?", "Greetings! The oracle is in. Ask away.", "Hi! What mystery shall we solve today?", "Hello! Your quest for knowledge ends here.", "Hey! Happy to help. What's your question?", "Hi there! Let's get this ball rolling.", "Hello, world! (Couldn't resist). How can I help?", "Hey! What's cooking? Let me know what you need.", "Hi! I'm Aether AI, and I'm here for you.", "How can I brighten your day with some information?", "Top of the morning to you! (Even if it's afternoon). What's up?", "Ahoy there! What can I do for you?", "Hey! Let's learn something cool.", "Hi! My circuits are buzzing with information. Ask away!", "Hello! What can I do for you on this fine day?", "Hey, it's you! What's on the agenda?", "Hi there! Ready to explore some data?", "Greetings! Your personal AI is ready for instructions.", "Hey! What shall we discover today?", "Hello there, knowledge-seeker!", "Hi! Let's get straight to it. What's your question?", "Hey! Good to hear from you. What's up?", "Greetings, friend. How can I assist?", "Hello! Let's find the answer together.", "Hey! The answer is just a query away.", "Hi! Let's find out what you need to know.", "Hello! Ready when you are.", "Hey there! Your friendly AI is online and ready.", "Hi! What's the plan, Stan?", "Well, look what the cat dragged in! Just kidding. How can I help?", "Hey! Let's get down to business.", "Hi there! What can I help you with?", "Hello! The digital library is open. What are you looking for?", "Hey! Your wish is my command... within reason, of course.", "Greetings from the digital world! How can I help?", "Hi! I'm here to make your life easier. What's the task?", "Hello! Let's get you the information you need.", "Hey! Ready to put me to the test?", "Hi there! Ask and you shall receive... an answer.", "Hello! Let's make some magic happen. What's your query?", "Hey! It's a beautiful day for data. What do you need?", "Hi! The knowledge base is open.", "Greetings! How can I assist you on your quest?", "Hey! Let's find out something new.", "Hello! I'm here to help you connect the dots.", "Hi! What information are you seeking today?", "Hey there! Ready for some AI-powered assistance?", "Greetings! Your digital concierge is at your service.", "Hello! Let's get you the answer you're looking for.", "Hey! What's the problem you're trying to solve?", "Hi! Let's tackle that question together.", "Hello! The possibilities are endless. What's your first question?", "Hey! Ready to learn something awesome?", "Hi there! Let's get you sorted.", "Hello! Your friendly AI is here to help.", "Hey! What can I do for you today?", "Hi! I'm ready for your questions.", "Greetings! The AI is in the house. What's up?", "Hello! Let's find you some answers.", "Hey! It's always a good time for a question.", "Hi! I'm here to assist. What do you need?", "Hello! Ready to get started?", "Hey there! Let's find out what you need.", "Hi! The digital world is at your fingertips. Ask away.", "Greetings! What can I help you discover?", "Hello! Let's find some clarity. What's your question?", "Hey! Ready for some answers?", "Hi! Let's get you the info you need.", "Hello! I'm at your service.", "Hey! Let's find a solution together.", "Hi! What can I help you with today?", "Hello! The world of information is waiting.", "Hey! Ready for your daily dose of knowledge?", "Hi there! Let's find what you're looking for.", "Greetings! I am Aether AI. How may I help you?", "Hello! What can I do for you?", "Hey! Let's find some answers, shall we?", "Hi! I'm here to help. What's your query?", "Hello! Ready to get some answers?", "Hey! Let's see what we can find out today.", "Hi! I'm ready when you are. Ask away.", "Hello! Your AI assistant is here to help.", "Hey! What's the question of the day?", "Hi there! I'm here to assist you.", "Greetings! Let's find the information you seek.", "Hello! I'm ready to help. What's on your mind?", "Hey! Let's find some answers.", "Hi! I'm here to make things easier. What do you need?", "Hello! Let's get started, shall we?", "Hey! I'm here to help you find what you need.", "Hi! The digital world awaits your query.", "Hello! Your personal AI is ready for action.", "Hey! Ready to learn something new today?", "Hi there! Let's find the answers you're looking for.", "Greetings! How can I be of assistance?", "Hello! Let's find what you need.", "Hey! The world of knowledge is at your command.", "Hi! I'm here to help you. What's the question?", "Hello! Ready to find some answers?", "Hey! Let's find out something interesting.", "Hi! Your AI companion is here to help.", "Hello! I'm ready for your questions. Fire away!", "Hey! What can I help you with?", "Hi there! Let's get you the information you need.", "Greetings! Let's find what you're looking for.", "Hello! I'm ready to assist. What's the query?", "Hey! Let's find the answer to your question.", "Hi! I'm here to help you. What do you need to know?", "Hello! Ready to get some answers?", "Hey! Let's see what we can learn today.", "Hi! I'm ready for your query. Ask away.", "Hello! Your AI assistant is ready and waiting.", "Hey! What's the question on your mind?", "Hi there! I'm here to help you out.", "Greetings! Let's find the knowledge you seek.", "Hello! I'm ready to help. What can I do for you?", "Hey! Let's find some answers together.", "Hi! I'm here to help. What's your question?", "Hello! Ready to get some answers?", "Hey! Let's find out something new and exciting.", "Hi! Your AI friend is here to help.", "Hello! I'm ready for whatever you throw at me. What's your question?", "Hey! What can I do to help you today?", "Hi there! Let's find the answers you need.", "Greetings! Let's find the information you desire.", "Hello! I'm ready to help you. What's on your mind?", "Hey! Let's find some answers to your questions.", "Hi! I'm here to assist you. What do you need?", "Hello! Ready to get some answers, my friend?", ];
+        
+        const stopWords = new Set(['a', 'an', 'the', 'is', 'are', 'was', 'were', 'what', 'who', 'when', 'where', 'why', 'how', 'of', 'in', 'on', 'at', 'for', 'to', 'and', 'but', 'or', 'do', 'you', 'me', 'i', 'tell']);
+
+        const levenshtein = (s1, s2) => {
+            if (!s1.length) return s2.length;
+            if (!s2.length) return s1.length;
+            const arr = [];
+            for (let i = 0; i <= s2.length; i++) {
+                arr[i] = [i];
+                for (let j = 1; j <= s1.length; j++) {
+                    arr[i][j] = i === 0 ? j : Math.min(arr[i - 1][j] + 1, arr[i][j - 1] + 1, arr[i - 1][j - 1] + (s1[j - 1] === s2[i - 1] ? 0 : 1));
+                }
+            }
+            return arr[s2.length][s1.length];
+        };
+
+        const normalizeText = (text) => text.toLowerCase().replace(/[^\w\s']/gi, '').trim();
+
+        function handleGreeting(text) {
+             const normalizedText = normalizeText(text);
+             const tokens = normalizedText.split(' ');
+             if (tokens.some(token => synonyms.greetings.includes(token))) {
+                 return greetingResponses[Math.floor(Math.random() * greetingResponses.length)];
+             }
+            return null;
+        }
+
+        function handleTime(text) {
+            const timeKeywords = ['time', 'date', 'day'];
+            if (timeKeywords.some(keyword => text.toLowerCase().includes(keyword))) {
+                 const now = new Date();
+                 const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                 const dateString = now.toLocaleDateString([], { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+                 return `Here in ${botConfig.location}, the time is ${timeString} on ${dateString}.`;
+            }
+            return null;
+        }
+
+        function handleMath(text) {
+            const mathRegex = /^(?:what is|calculate|compute|solve)\s*([ \d\.\+\-\*\/\(\)]+)$/i;
+            const simpleMathRegex = /^[ \d\.\+\-\*\/\(\)]+$/;
+            let expression = null;
+            const mathMatch = text.match(mathRegex);
+            if (mathMatch && mathMatch[1]) expression = mathMatch[1].trim();
+            else if (simpleMathRegex.test(text)) expression = text.trim();
+            if (expression) {
+                if (/^[\d\.]+$/.test(expression)) return null;
+                try {
+                    const result = new Function(`return ${expression.replace(/[^-()\d/*+.\s]/g, '')}`)();
+                    if (isNaN(result) || !isFinite(result)) return "That looks like a math problem I can't solve.";
+                    return `The answer is ${result}.`;
+                } catch (e) {
+                    return "I encountered an error trying to solve that.";
+                }
+            }
+            return null;
+        }
+        
+        function handleSentiment(text) {
+            const positiveWords = ['good', 'great', 'awesome', 'happy', 'love', 'like', 'amazing'];
+            const negativeWords = ['sad', 'bad', 'terrible', 'awful', 'hate', 'angry', 'frustrated'];
+            const tokens = normalizeText(text).split(' ');
+            if (tokens.some(token => positiveWords.includes(token))) return "I'm glad to hear that! 😊";
+            if (tokens.some(token => negativeWords.includes(token))) return "I'm sorry to hear that. I hope things get better soon.";
+            return null;
+        }
+
+        function handleCommands(text) {
+            const normalizedText = normalizeText(text);
+            if (normalizedText === 'clear chat' || normalizedText === 'reset conversation') {
+                elements.chatMessages.innerHTML = '';
+                elements.welcomeScreen.classList.remove('hidden');
+                // Ensure suggestions stay hidden after a manual clear
+                elements.suggestionChips.classList.add('hidden');
+                sessionState.lastFaqKey = null;
+                return "Chat cleared!";
+            }
+            return null;
+        }
+
+        function handleFollowUp(text) {
+            const normalizedText = normalizeText(text);
+            if (sessionState.lastFaqKey && synonyms.followUps.includes(normalizedText)) {
+                const lastFaq = allFaqs[sessionState.lastFaqKey];
+                if (lastFaq && lastFaq.category) {
+                     return `Of course. The topic of "${lastFaq.question}" is part of the broader category of ${lastFaq.category}. Is there another question I can answer about this?`;
+                }
+                return "Certainly. Do you have a specific follow-up question?";
+            }
+            return null;
+        }
+
+        function scrollToBottom() {
+            elements.chatContainer.scrollTop = elements.chatContainer.scrollHeight;
+        }
+
+        function setGeneratingState(isGenerating) {
+            sessionState.isGenerating = isGenerating;
+            elements.sendBtn.disabled = isGenerating;
+            elements.chatInput.disabled = isGenerating;
+            elements.stopGeneratingContainer.classList.toggle('hidden', !isGenerating);
+        }
+
+        function streamResponse(messageContainer, fullText) {
+            setGeneratingState(true);
+            const words = fullText.split(' ');
+            let wordIndex = 0;
+            messageContainer.textContent = '';
+
+            sessionState.streamInterval = setInterval(() => {
+                if (wordIndex < words.length) {
+                    messageContainer.textContent += (wordIndex > 0 ? ' ' : '') + words[wordIndex];
+                    wordIndex++;
+                    scrollToBottom();
+                } else {
+                    stopStreaming();
+                }
+            }, 50);
+        }
+
+        function stopStreaming() {
+            if (sessionState.streamInterval) {
+                clearInterval(sessionState.streamInterval);
+                sessionState.streamInterval = null;
+            }
+            setGeneratingState(false);
+            parseAndHighlightCode();
+        }
+
+        function addMessage(sender, content) {
+            elements.welcomeScreen.classList.add('hidden');
+            elements.suggestionChips.classList.add('hidden');
+            const messageGroup = document.createElement('div');
+            messageGroup.className = `message-group ${sender}`;
+            if (sender === 'bot') {
+                const avatar = document.createElement('div');
+                avatar.className = 'bot-avatar';
+                avatar.innerHTML = `<i data-lucide="${botConfig.avatarIcon}" class="text-white w-6 h-6"></i>`;
+                messageGroup.appendChild(avatar);
+            }
+            const messagesContainer = document.createElement('div');
+            messagesContainer.className = 'flex flex-col gap-2 w-full';
+            messagesContainer.innerHTML = content;
+            messageGroup.appendChild(messagesContainer);
+            elements.chatMessages.appendChild(messageGroup);
+            lucide.createIcons();
+            scrollToBottom();
+            return messagesContainer; // Return the container of all message blocks
+        }
+
+        function createMessageHTML(blockData) {
+            let innerHTML;
+             if (typeof blockData === 'string') {
+                innerHTML = `<div class="message-content">${blockData}</div>`;
+            } else {
+                 switch (blockData.type) {
+                    case 'text':
+                        innerHTML = `<div class="message-content">${blockData.content}</div>`;
+                        break;
+                    case 'image':
+                        innerHTML = `<div class="bot-message-block image-container"><img src="${blockData.url}" class="content-block" alt="Chatbot Image"></div>`;
+                        break;
+                    case 'button':
+                        return `<div class="bot-message-block has-content"><a href="${blockData.url}" target="_blank" rel="noopener noreferrer" class="content-button">${blockData.text}</a></div>`;
+                 }
+            }
+
+            if ((typeof blockData === 'string') || (blockData.type === 'text')) {
+                return `<div class="message-container">${innerHTML}<div class="message-actions"><button class="action-btn copy-message-btn" title="Copy"><i data-lucide="copy" class="w-4 h-4 pointer-events-none"></i></button></div></div>`;
+            }
+
+            return `<div class="message-container">${innerHTML}</div>`;
+        }
+
+        function parseAndHighlightCode() {
+            const botMessages = elements.chatMessages.querySelectorAll('.bot-message-block .message-content, .message-group.bot > .flex-col .message-content');
+            botMessages.forEach(msg => {
+                if (msg.innerText.includes('```')) {
+                     const originalText = msg.innerText;
+                     const parts = originalText.split(/```(\w*)\n/);
+                     if (parts.length > 1) {
+                        let newHTML = parts[0];
+                        for (let i = 1; i < parts.length; i += 2) {
+                            const lang = parts[i] || 'markup';
+                            const code = parts[i + 1].trim();
+                            const codeId = `code-${Date.now()}-${Math.random()}`;
+                            newHTML += `
+                                <div class="code-container">
+                                    <pre class="language-${lang}"><code id="${codeId}">${code}</code></pre>
+                                    <button class="copy-code-btn" data-copy-target-id="${codeId}">Copy</button>
+                                </div>
+                            `;
+                        }
+                        msg.innerHTML = newHTML;
+                        Prism.highlightAll();
+                     }
+                 }
+            });
+        }
+
+        function displayRecommendedQuestions(questions) {
+            let content = `<div class="message-content" style="border-bottom-left-radius: 0; border-bottom-right-radius: 0; border-bottom: 1px solid #4b5563;">I'm not sure I have the exact answer for that. Perhaps one of these questions will help:</div>`;
+            questions.forEach(q => {
+                content += `<button class="recommendation-btn" data-question="${q.question}">${q.question}</button>`;
+            });
+            const container = document.createElement('div');
+            container.className = 'bot-message-block';
+            container.innerHTML = content;
+
+            const messageGroup = document.createElement('div');
+            messageGroup.className = 'message-group bot';
+            const avatar = document.createElement('div');
+            avatar.className = 'bot-avatar';
+            avatar.innerHTML = `<i data-lucide="${botConfig.avatarIcon}" class="text-white w-6 h-6"></i>`;
+            messageGroup.appendChild(avatar);
+            messageGroup.appendChild(container);
+            elements.chatMessages.appendChild(messageGroup);
+            lucide.createIcons();
+            scrollToBottom();
+        }
+
+        function findAndDisplayReply(userText) {
+            let response = null;
+            sessionState.lastFaqKey = null;
+
+            // Priority 1: Direct commands and simple interactions
+            response = handleCommands(userText) || handleFollowUp(userText) || handleGreeting(userText) || handleTime(userText) || handleMath(userText) || handleSentiment(userText);
+            if (response) {
+                const messageElContainer = addMessage('bot', createMessageHTML(response));
+                const messageEl = messageElContainer.querySelector('.message-content');
+                streamResponse(messageEl, response);
+                return;
+            }
+
+            // Priority 2: Complex search in knowledge base
+            const normalizedUserText = normalizeText(userText);
+            const allCategories = new Set(Object.values(allFaqs).map(f => f.category?.toLowerCase()).filter(Boolean));
+            const detectedCategories = new Set();
+            allCategories.forEach(c => { if(normalizedUserText.includes(c)) detectedCategories.add(c) });
+            
+            let allMatches = [];
+            const highConfidenceThreshold = 0.70;
+            const suggestionThreshold = 0.35;
+
+            const calculateScore = (userInput, questionText, categoryText = '', views = 0, detectedCategories) => {
+                const normUserInput = normalizeText(userInput);
+                const normQuestionText = normalizeText(questionText);
+                const levDistance = levenshtein(normUserInput, normQuestionText);
+                const levScore = 1 - levDistance / Math.max(normUserInput.length || 1, normQuestionText.length || 1);
+                const userTokens = new Set(normUserInput.split(' ').filter(word => !stopWords.has(word)));
+                const questionTokens = new Set(normQuestionText.split(' ').filter(word => !stopWords.has(word)));
+                if (userTokens.size === 0) return 0;
+                const intersection = new Set([...userTokens].filter(x => questionTokens.has(x)));
+                const keywordScore = intersection.size / userTokens.size;
+                const lengthRatio = Math.min(normUserInput.length, normQuestionText.length) / Math.max(normUserInput.length || 1, normQuestionText.length || 1);
+                const baseScore = (keywordScore * 0.7) + (levScore * 0.2) + (lengthRatio * 0.1);
+                const getBigrams = (text) => {
+                    const words = text.split(' ').filter(word => !stopWords.has(word));
+                    const bigrams = new Set();
+                    for (let i = 0; i < words.length - 1; i++) bigrams.add(`${words[i]} ${words[i+1]}`);
+                    return bigrams;
+                };
+                const userBigrams = getBigrams(normUserInput);
+                const questionBigrams = getBigrams(normQuestionText);
+                let bigramBonus = 0;
+                if (userBigrams.size > 0) {
+                    const bigramIntersection = new Set([...userBigrams].filter(x => questionBigrams.has(x)));
+                    bigramBonus = (bigramIntersection.size / userBigrams.size) * 0.15;
+                }
+                let categoryBoost = 0;
+                const normCategory = normalizeText(categoryText);
+                if (detectedCategories.has(normCategory)) categoryBoost = 0.2;
+                const popularityBonus = Math.log10((views || 0) + 1) * 0.025;
+                const finalScore = baseScore + popularityBonus + bigramBonus + categoryBoost;
+                return Math.min(finalScore, 1.0);
+            };
+
+            for (const key in allFaqs) {
+                const faq = allFaqs[key];
+                if (faq.question) {
+                    const score = calculateScore(userText, faq.question, faq.category, faq.views, detectedCategories);
+                    if (score > suggestionThreshold) allMatches.push({ question: faq.question, score: score, source: 'firebase', key: key });
+                }
+            }
+            for (const category in inbuiltReplies) {
+                for (const question in inbuiltReplies[category]) {
+                    const score = calculateScore(userText, question, category, 0, detectedCategories);
+                    if (score > suggestionThreshold) allMatches.push({ question: question, score: score, source: 'inbuilt', category: category });
+                }
+            }
+            
+            if (allMatches.length > 0) {
+                allMatches.sort((a, b) => b.score - a.score);
+                const bestMatch = allMatches[0];
+                if (bestMatch.score >= highConfidenceThreshold) {
+                    if (bestMatch.source === 'firebase') {
+                        const matchedFaq = { ...allFaqs[bestMatch.key], key: bestMatch.key };
+                        
+                        let htmlContent = '';
+                        matchedFaq.reply.forEach(block => htmlContent += createMessageHTML(block));
+                        const messagesContainer = addMessage('bot', htmlContent);
+                        
+                        const textToStream = matchedFaq.reply.find(b => b.type === 'text')?.content || '';
+                        if (textToStream) {
+                            const textElement = Array.from(messagesContainer.querySelectorAll('.message-content')).find(el => el.textContent === '' || el.textContent === textToStream);
+                            if (textElement) {
+                                streamResponse(textElement, textToStream);
+                            } else {
+                                stopStreaming();
+                            }
+                        } else {
+                            stopStreaming();
+                        }
+
+                        update(ref(db), {[`faqs/${matchedFaq.key}/views`]: (matchedFaq.views || 0) + 1});
+                        sessionState.lastFaqKey = bestMatch.key;
+
+                    } else if (bestMatch.source === 'inbuilt') {
+                        let answer = inbuiltReplies[bestMatch.category][bestMatch.question];
+                        if (Array.isArray(answer)) answer = answer[Math.floor(Math.random() * answer.length)];
+                        const messageElContainer = addMessage('bot', createMessageHTML(answer));
+                        streamResponse(messageElContainer.querySelector('.message-content'), answer);
+                    }
+                } else {
+                    const uniqueSuggestions = allMatches.filter((v, i, a) => a.findIndex(t => (t.question === v.question)) === i);
+                    displayRecommendedQuestions(uniqueSuggestions.slice(0, 5));
+                }
+            } else {
+                const keywords = userText.toLowerCase().split(' ').filter(word => !stopWords.has(word) && word.length > 2).join(', ');
+                const responseText = "I'm sorry, I don't have an answer for that. My human colleagues will be notified so they can teach me for next time!";
+                const messageElContainer = addMessage('bot', createMessageHTML(responseText));
+                streamResponse(messageElContainer.querySelector('.message-content'), responseText);
+                const unansweredRef = push(ref(db, 'unansweredQuestions'));
+                set(unansweredRef, { question: userText, keywords, timestamp: new Date().toISOString() });
+            }
+        }
+        
+        function sendMessage(text) {
+            const userText = text || elements.chatInput.value.trim();
+            if (userText === '' || sessionState.isGenerating) return;
+            addMessage('user', `<div class="message-container"><div class="message-content">${userText}</div></div>`);
+            if (!text) {
+               elements.chatInput.value = '';
+               elements.chatInput.style.height = 'auto';
+            }
+            findAndDisplayReply(userText);
+        }
+        
+        function displayRandomSuggestions() {
+            // Get all questions from the Firebase database
+            const allDBQuestions = Object.values(allFaqs).map(faq => faq.question).filter(Boolean);
+            
+            let suggestionsPool = allDBQuestions;
+
+            // Only show suggestions if we have questions from the database AND they haven't been shown yet
+            if (suggestionsPool.length > 0 && !initialSuggestionsShown) {
+                // Shuffle the array and pick a few unique questions
+                const shuffled = [...new Set(suggestionsPool)].sort(() => 0.5 - Math.random());
+                const selected = shuffled.slice(0, 3);
+
+                elements.suggestionChips.innerHTML = ''; // Clear existing chips
+                selected.forEach(text => {
+                    const button = document.createElement('button');
+                    button.className = 'suggestion-chip px-4 py-2 rounded-full text-sm';
+                    button.textContent = text;
+                    elements.suggestionChips.appendChild(button);
+                });
+                // Make the container visible now that it's populated
+                elements.suggestionChips.classList.remove('hidden');
+                initialSuggestionsShown = true; // Set the flag so they don't show again
+            } else {
+                // If the DB is loaded but empty or suggestions were already shown, keep it hidden.
+                elements.suggestionChips.classList.add('hidden');
+            }
+        }
+        
+        function applyBranding() {
+            document.getElementById('bot-title').textContent = botConfig.name;
+            document.getElementById('welcome-header').textContent = `Welcome to ${botConfig.name}`;
+            document.getElementById('disclaimer-text').textContent = `${botConfig.name} can make mistakes. Consider checking important information.`;
+            elements.chatInput.placeholder = `Ask ${botConfig.name} anything...`;
+        }
+
+        elements.sendBtn.addEventListener('click', () => sendMessage());
+        elements.chatInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+        elements.chatInput.addEventListener('input', () => {
+            elements.chatInput.style.height = 'auto';
+            elements.chatInput.style.height = `${elements.chatInput.scrollHeight}px`;
+        });
+        elements.suggestionChips.addEventListener('click', (e) => {
+            if (e.target.tagName === 'BUTTON') sendMessage(e.target.textContent);
+        });
+        elements.chatMessages.addEventListener('click', (e) => {
+            if (e.target.classList.contains('recommendation-btn')) {
+                sendMessage(e.target.dataset.question);
+            }
+             
+            if (e.target.classList.contains('copy-code-btn')) {
+                const targetId = e.target.dataset.copyTargetId;
+                const codeElement = document.getElementById(targetId);
+                if (codeElement) {
+                    const textToCopy = codeElement.innerText;
+                    const textArea = document.createElement('textarea');
+                    textArea.value = textToCopy;
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                    e.target.textContent = 'Copied!';
+                    setTimeout(() => e.target.textContent = 'Copy', 2000);
+                }
+            }
+            
+            const copyBtn = e.target.closest('.copy-message-btn');
+            if (copyBtn) {
+                const messageContainer = copyBtn.closest('.message-container');
+                const messageContent = messageContainer.querySelector('.message-content');
+                if (messageContent) {
+                    const textToCopy = messageContent.textContent || messageContent.innerText;
+                    
+                    const textArea = document.createElement('textarea');
+                    textArea.value = textToCopy;
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textArea);
+
+                    const iconContainer = copyBtn;
+                    iconContainer.innerHTML = `<i data-lucide="check" class="w-4 h-4 text-green-400"></i>`;
+                    lucide.createIcons();
+                    setTimeout(() => {
+                        iconContainer.innerHTML = `<i data-lucide="copy" class="w-4 h-4 pointer-events-none"></i>`;
+                        lucide.createIcons();
+                    }, 2000);
+                }
+            }
+        });
+
+        elements.stopGeneratingBtn.addEventListener('click', stopStreaming);
+
+        // Initialize
+        onValue(ref(db, 'faqs'), (snapshot) => {
+            allFaqs = snapshot.val() || {};
+            console.log("Firebase FAQs loaded.");
+            // Only display suggestions after the data has been loaded
+            displayRandomSuggestions();
+        });
+        
+        applyBranding();
+        lucide.createIcons();
+    </script>
+</body>
+</html>
+
+
