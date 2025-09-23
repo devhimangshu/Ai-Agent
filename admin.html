@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chatbot Admin Dashboard</title>
+    <title>Blue Minch AI - Admin Panel</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -86,21 +86,19 @@
             box-shadow: 0 10px 15px -3px rgba(0,0,0,0.07), 0 4px 6px -2px rgba(0,0,0,0.04);
         }
 
-        .reply-preview-content { max-height: 150px; overflow: hidden; }
-        .reply-preview-content img { max-height: 80px; border-radius: 0.25rem; border: 1px solid #eee; }
-        .reply-preview-content .preview-table { font-size: 0.75rem; width: auto; }
-        .reply-preview-content .preview-table td, .reply-preview-content .preview-table th { padding: 4px 6px; }
-        .reply-preview-content .preview-button {
-            display: inline-block; background-color: #e5e7eb; padding: 4px 12px;
-            border-radius: 0.25rem; font-size: 0.8rem; font-weight: 500;
-        }
+        .reply-preview-content { max-height: 100px; overflow: hidden; } /* Compacted */
+        .reply-preview-content img { max-height: 60px; border-radius: 0.25rem; border: 1px solid #eee; }
+        .reply-preview-content .preview-table { font-size: 0.7rem; }
+        .reply-preview-content .preview-table td, .reply-preview-content .preview-table th { padding: 3px 5px; }
+        .reply-preview-content .preview-button { padding: 3px 10px; font-size: 0.75rem; }
         
-        .nav-item.active { background-color: #eef2ff; color: #4338ca; font-weight: 600; }
-        .category-item.active { background-color: #eef2ff; color: #4338ca; font-weight: 600; }
+        .nav-item.active { background-color: #eff6ff; color: #1d4ed8; font-weight: 600; }
+        .category-item.active { background-color: #eff6ff; color: #1d4ed8; font-weight: 600; }
         
         .faq-card {
             transition: transform 0.2s, box-shadow 0.2s;
             border-left-width: 4px;
+            padding: 0.75rem; /* Compacted */
         }
         .faq-card:hover {
             transform: translateY(-2px);
@@ -112,13 +110,23 @@
             display: inline-block; vertical-align: middle; position: relative;
         }
         .custom-checkbox:checked {
-            background-color: #4f46e5; border-color: #4f46e5;
+            background-color: #2563eb; border-color: #2563eb;
         }
         .custom-checkbox:checked::after {
             content: ''; display: block; width: 0.3rem; height: 0.6rem;
             border: solid white; border-width: 0 2px 2px 0;
             transform: rotate(45deg); position: absolute; top: 2px; left: 6px;
         }
+
+        /* Pagination Styles */
+        .pagination-btn {
+            padding: 0.5rem 0.75rem; border-radius: 0.375rem; border: 1px solid #d1d5db;
+            background-color: white; font-size: 0.875rem; font-weight: 500;
+            transition: all 0.2s;
+        }
+        .pagination-btn:hover:not(:disabled) { background-color: #f3f4f6; }
+        .pagination-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .pagination-btn.active { background-color: #eff6ff; border-color: #3b82f6; color: #1d4ed8; }
 
     </style>
 </head>
@@ -131,30 +139,30 @@
     <aside id="drawer" class="bg-white w-72 fixed top-0 left-0 h-full z-40 shadow-lg">
         <div class="p-6 flex items-center justify-between border-b">
             <div class="flex items-center space-x-3">
-                 <div class="p-2 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg shadow-md">
-                    <i data-lucide="bot" class="text-white"></i>
+                 <div class="p-2 bg-gradient-to-br from-sky-400 to-blue-500 rounded-lg shadow-md">
+                    <img src="https://html-generator.com/uploads/images/2025/09/23/36475G8PAZQLZ5Z.png" alt="Blue Minch Logo" class="w-6 h-6">
                 </div>
-                <h1 class="text-xl font-bold text-gray-900">AI Knowledge Base</h1>
+                <h1 class="text-xl font-bold text-gray-900">Blue Minch AI</h1>
             </div>
         </div>
         <nav class="p-4 overflow-y-auto h-[calc(100vh-69px)]">
             <h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 px-2">Menu</h2>
              <ul class="space-y-1 mb-6">
-                 <li><a href="#" data-view="dashboard" class="nav-item flex items-center px-2 py-2 text-sm font-medium rounded-md text-gray-700 hover:bg-indigo-50"><i data-lucide="home" class="w-5 h-5 mr-3"></i>Dashboard</a></li>
-                 <li><a href="#" data-view="training" class="nav-item flex items-center px-2 py-2 text-sm font-medium rounded-md text-gray-700 hover:bg-indigo-50 relative">
-                    <i data-lucide="brain-circuit" class="w-5 h-5 mr-3"></i>Training Center
-                    <span id="training-count-badge" class="absolute right-2 top-1/2 -translate-y-1-2 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center hidden">0</span>
-                </a></li>
-            </ul>
+                 <li><a href="#" data-view="dashboard" class="nav-item flex items-center px-2 py-2 text-sm font-medium rounded-md text-gray-700 hover:bg-blue-50"><i data-lucide="home" class="w-5 h-5 mr-3"></i>Dashboard</a></li>
+                 <li><a href="#" data-view="training" class="nav-item flex items-center px-2 py-2 text-sm font-medium rounded-md text-gray-700 hover:bg-blue-50 relative">
+                     <i data-lucide="brain-circuit" class="w-5 h-5 mr-3"></i>Training Center
+                     <span id="training-count-badge" class="absolute right-2 top-1/2 -translate-y-1-2 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center hidden">0</span>
+                 </a></li>
+             </ul>
 
             <h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 px-2">Categories</h2>
             <ul id="category-list" class="space-y-1"></ul>
              <div class="mt-4 px-2">
-                 <button id="add-new-category-btn" class="w-full flex items-center justify-center text-sm text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 py-2 rounded-md border-2 border-dashed hover:border-indigo-300 transition-colors">
+                 <button id="add-new-category-btn" class="w-full flex items-center justify-center text-sm text-gray-600 hover:text-blue-600 hover:bg-blue-50 py-2 rounded-md border-2 border-dashed hover:border-blue-300 transition-colors">
                      <i data-lucide="plus" class="w-4 h-4 mr-2"></i>
                      Add New Category
                  </button>
-            </div>
+             </div>
         </nav>
     </aside>
 
@@ -165,10 +173,10 @@
                 <div class="flex h-16 items-center justify-between">
                     <div class="flex items-center">
                         <button id="menu-btn" class="p-2 rounded-md text-gray-600 hover:bg-gray-100">
-                             <span id="menu-btn-icon-container"><i data-lucide="menu" class="w-6 h-6"></i></span>
+                            <span id="menu-btn-icon-container"><i data-lucide="menu" class="w-6 h-6"></i></span>
                         </button>
                     </div>
-                    <button id="add-new-reply-btn" class="flex items-center justify-center bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-2 px-4 rounded-md hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition shadow-md hover:shadow-lg">
+                    <button id="add-new-reply-btn" class="flex items-center justify-center bg-gradient-to-r from-sky-500 to-blue-600 text-white py-2 px-4 rounded-md hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition shadow-md hover:shadow-lg">
                         <i data-lucide="plus" class="w-4 h-4 mr-2"></i>
                         Add New Reply
                     </button>
@@ -180,7 +188,6 @@
             <!-- Dashboard View -->
             <div id="view-dashboard">
                 <section id="stats-section" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                       <!-- Stats Cards -->
                     <div class="stat-card">
                         <div class="p-3 bg-blue-100 rounded-full"><i data-lucide="message-square" class="w-6 h-6 text-blue-600"></i></div>
                         <div><p class="text-sm text-gray-500">Total Replies</p><p id="total-replies-stat" class="text-2xl font-bold text-gray-800">0</p></div>
@@ -200,36 +207,46 @@
                 </section>
                 <section class="grid grid-cols-1 xl:grid-cols-3 gap-8">
                      <div class="xl:col-span-2">
-                        <div class="flex flex-col sm:flex-row justify-between sm:items-center mb-4 gap-4">
+                         <div class="flex flex-col sm:flex-row justify-between sm:items-center mb-4 gap-4">
                              <h2 id="current-category-title" class="text-2xl font-bold text-gray-800">All Replies</h2>
-                             <div class="relative"><i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"></i><input type="text" id="search-input" placeholder="Search replies..." class="pl-10 pr-4 py-2 w-full sm:w-64 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"></div>
-                        </div>
-                        <div id="bulk-action-bar" class="hidden bg-indigo-50 p-3 rounded-lg mb-4 flex justify-between items-center">
-                            <p class="text-sm font-medium text-indigo-800"><span id="selected-count">0</span> replies selected</p>
-                            <button id="delete-selected-btn" class="bg-red-500 text-white px-3 py-1.5 rounded-md text-sm font-semibold hover:bg-red-600 flex items-center gap-2"><i data-lucide="trash-2" class="w-4 h-4"></i>Delete Selected</button>
-                        </div>
-                         <div id="faq-list" class="space-y-4"></div>
+                             <div class="flex items-center gap-2 flex-wrap">
+                                 <div class="relative"><i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"></i><input type="text" id="search-input" placeholder="Search replies..." class="pl-10 pr-4 py-2 w-full sm:w-48 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm"></div>
+                                 <select id="sort-by-select" class="py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm"><option value="newest">Sort: Newest</option><option value="oldest">Sort: Oldest</option><option value="most_viewed">Sort: Most Viewed</option></select>
+                                 <select id="items-per-page-select" class="py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm"><option value="7">Show: 7</option><option value="15">Show: 15</option><option value="30">Show: 30</option></select>
+                             </div>
+                         </div>
+                         <div id="bulk-action-bar" class="hidden bg-blue-50 p-3 rounded-lg mb-4 flex justify-between items-center">
+                             <p class="text-sm font-medium text-blue-800"><span id="selected-count">0</span> replies selected</p>
+                             <button id="delete-selected-btn" class="bg-red-500 text-white px-3 py-1.5 rounded-md text-sm font-semibold hover:bg-red-600 flex items-center gap-2"><i data-lucide="trash-2" class="w-4 h-4"></i>Delete Selected</button>
+                         </div>
+                          <div id="faq-list" class="space-y-3"></div>
+                          <div id="pagination-container" class="mt-6 flex justify-center items-center"></div>
                      </div>
                      <div class="xl:col-span-1">
-                        <div class="flex justify-between items-center mb-4">
-                            <h2 class="text-2xl font-bold text-gray-800">Recent Activity</h2>
-                            <button id="clear-activity-btn" class="text-sm text-gray-500 hover:text-red-600 font-semibold p-1">Clear</button>
-                        </div>
-                        <div id="activity-feed" class="space-y-3 bg-white p-4 rounded-lg shadow-sm border h-full max-h-[600px] overflow-y-auto"></div>
+                         <div class="flex justify-between items-center mb-4">
+                             <h2 class="text-2xl font-bold text-gray-800">Recent Activity</h2>
+                             <button id="clear-activity-btn" class="text-sm text-gray-500 hover:text-red-600 font-semibold p-1">Clear</button>
+                         </div>
+                         <div id="activity-feed" class="space-y-3 bg-white p-4 rounded-lg shadow-sm border h-full max-h-[600px] overflow-y-auto"></div>
                      </div>
                 </section>
             </div>
             
-            <!-- Training Center View -->
             <div id="view-training" class="hidden">
                  <h2 class="text-2xl font-bold text-gray-800 mb-4">Training Center</h2>
                  <p class="text-gray-600 mb-6">These are questions your chatbot could not answer. Create a reply to train your bot or dismiss them.</p>
                  <div id="unanswered-questions-list" class="space-y-3"></div>
             </div>
         </main>
+        <footer class="sticky bottom-0 bg-white/95 backdrop-blur-sm p-2 border-t text-center text-sm text-gray-600 z-10">
+            <div class="flex items-center justify-center gap-2">
+                <img src="https://html-generator.com/uploads/images/2025/09/23/36475G8PAZQLZ5Z.png" class="w-5 h-5">
+                <span>Powered by <strong>Blue Minch AI</strong></span>
+            </div>
+        </footer>
     </div>
 
-    <!-- Add/Edit Reply Modal -->
+    <!-- Modals... -->
     <div id="edit-modal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50 hidden opacity-0">
          <div class="modal-content w-full max-w-3xl bg-gray-100 rounded-lg shadow-xl max-h-[90vh] flex flex-col transform scale-95">
             <header class="p-4 border-b bg-white rounded-t-lg flex justify-between items-center flex-shrink-0">
@@ -238,8 +255,8 @@
             </header>
             <form id="edit-form" class="p-6 space-y-4 overflow-y-auto flex-1">
                 <input type="hidden" id="edit-key"><input type="hidden" id="training-key">
-                <div><label for="edit-question" class="block text-sm font-medium text-gray-700">User's Question</label><input type="text" id="edit-question" placeholder="e.g., What are your prices?" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3 text-sm focus:ring-indigo-500 focus:border-indigo-500" required></div>
-                <div><label for="edit-category" class="block text-sm font-medium text-gray-700">Category</label><select id="edit-category" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3 text-sm focus:ring-indigo-500 focus:border-indigo-500"></select></div>
+                <div><label for="edit-question" class="block text-sm font-medium text-gray-700">User's Question</label><input type="text" id="edit-question" placeholder="e.g., What are your prices?" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3 text-sm focus:ring-blue-500 focus:border-blue-500" required></div>
+                <div><label for="edit-category" class="block text-sm font-medium text-gray-700">Category</label><select id="edit-category" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3 text-sm focus:ring-blue-500 focus:border-blue-500"></select></div>
                 <h3 class="text-md font-medium text-gray-700 pt-2">Bot's Reply Builder</h3>
                 <div id="reply-builder-container" class="space-y-3"></div>
                 <div class="flex flex-wrap gap-2 pt-2">
@@ -251,12 +268,10 @@
             </form>
             <footer class="p-4 bg-white border-t rounded-b-lg flex justify-end space-x-3 flex-shrink-0">
                 <button type="button" id="cancel-edit-btn" class="bg-gray-200 text-gray-800 py-2 px-4 rounded-md hover:bg-gray-300">Cancel</button>
-                <button type="submit" form="edit-form" class="bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700">Save Reply</button>
+                <button type="submit" form="edit-form" class="bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700">Save Reply</button>
             </footer>
         </div>
     </div>
-
-    <!-- Confirmation Modal -->
     <div id="confirm-modal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-[60] hidden opacity-0">
         <div class="modal-content w-full max-w-sm bg-white rounded-lg shadow-xl p-6 text-center transform scale-95">
             <h3 id="confirm-title" class="text-lg font-semibold text-gray-800 mb-2">Are you sure?</h3><p id="confirm-text" class="text-gray-600 mb-6">This action cannot be undone.</p>
@@ -267,8 +282,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getDatabase, ref, onValue, push, set, remove, update } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
-
-        // IMPORTANT: Replace with your Firebase project configuration
+        
         const firebaseConfig = {
           apiKey: "AIzaSyCICnKBs4Ko8oiOkoB2Jg_QRP8IqqTzmWo",
           authDomain: "bm-ai-agent.firebaseapp.com",
@@ -287,6 +301,9 @@
         let unansweredQuestions = {};
         let currentCategoryFilter = 'all';
         let selectedReplies = new Set();
+        let currentPage = 1;
+        let itemsPerPage = 7;
+        let sortBy = 'newest';
         
         const elements = {
             faqList: document.getElementById('faq-list'), addNewReplyBtn: document.getElementById('add-new-reply-btn'),
@@ -313,6 +330,9 @@
             bulkActionBar: document.getElementById('bulk-action-bar'),
             selectedCount: document.getElementById('selected-count'),
             deleteSelectedBtn: document.getElementById('delete-selected-btn'),
+            sortBySelect: document.getElementById('sort-by-select'),
+            itemsPerPageSelect: document.getElementById('items-per-page-select'),
+            paginationContainer: document.getElementById('pagination-container'),
         };
 
         // --- UTILITY FUNCTIONS ---
@@ -412,8 +432,8 @@
             elements.confirmModal.classList.add('opacity-0');
             elements.confirmModal.querySelector('.modal-content').classList.add('scale-95');
             setTimeout(() => {
-                 elements.confirmModal.classList.add('hidden');
-                 confirmCallback = null;
+                elements.confirmModal.classList.add('hidden');
+                confirmCallback = null;
             }, 300);
         }
         
@@ -458,14 +478,14 @@
         function renderCategories() {
             elements.categoryList.innerHTML = '';
             const allItem = document.createElement('li');
-            allItem.innerHTML = `<a href="#" data-category="all" class="category-item flex items-center px-2 py-2 text-sm font-medium rounded-md text-gray-700 hover:bg-indigo-50">All Replies</a>`;
+            allItem.innerHTML = `<a href="#" data-category="all" class="category-item flex items-center px-2 py-2 text-sm font-medium rounded-md text-gray-700 hover:bg-blue-50">All Replies</a>`;
             elements.categoryList.appendChild(allItem);
 
             getCategories().forEach(cat => {
                 const li = document.createElement('li');
                 const catKey = Object.keys(allCategories).find(key => allCategories[key].name === cat);
                 
-                li.innerHTML = `<a href="#" data-category="${cat}" class="category-item flex items-center justify-between px-2 py-2 text-sm font-medium rounded-md group text-gray-700 hover:bg-indigo-50">
+                li.innerHTML = `<a href="#" data-category="${cat}" class="category-item flex items-center justify-between px-2 py-2 text-sm font-medium rounded-md group text-gray-700 hover:bg-blue-50">
                     <span class="truncate">${cat}</span>
                     ${!['General', 'Greetings', 'Pricing', 'Support', 'Features'].includes(cat) && catKey ? `<button data-key="${catKey}" class="delete-category-btn hidden group-hover:block p-1 hover:bg-red-100 rounded-full flex-shrink-0"><i data-lucide="trash-2" class="w-3 h-3 text-red-500"></i></button>` : ''}
                 </a>`;
@@ -473,7 +493,7 @@
             });
             
             document.querySelectorAll('.category-item').forEach(item => {
-                const isDashboardActive = elements.views.dashboard.style.display !== 'none';
+                const isDashboardActive = !elements.views.dashboard.classList.contains('hidden');
                 const isCategoryMatch = item.dataset.category === currentCategoryFilter;
                 item.classList.toggle('active', isDashboardActive && isCategoryMatch);
              });
@@ -481,23 +501,71 @@
         }
 
         function renderFaqs() {
-            elements.faqList.innerHTML = '';
             const searchTerm = elements.searchInput.value.toLowerCase();
-            const faqsToRender = Object.entries(allFaqs).filter(([key, faq]) => {
+            let filteredFaqs = Object.entries(allFaqs).filter(([key, faq]) => {
                 const inCategory = currentCategoryFilter === 'all' || faq.category === currentCategoryFilter;
                 const inSearch = !searchTerm || (faq.question || '').toLowerCase().includes(searchTerm);
                 return inCategory && inSearch;
             });
-            updateBulkActionBar();
 
-            if (faqsToRender.length === 0) {
-                 elements.faqList.innerHTML = `<div class="text-center text-gray-500 p-6 bg-white rounded-lg shadow-sm border border-gray-200">No replies found for this category.</div>`;
+            filteredFaqs.sort(([, a], [, b]) => {
+                switch (sortBy) {
+                    case 'oldest': return new Date(a.lastUpdated) - new Date(b.lastUpdated);
+                    case 'most_viewed': return (b.views || 0) - (a.views || 0);
+                    case 'newest': default: return new Date(b.lastUpdated) - new Date(a.lastUpdated);
+                }
+            });
+
+            const totalItems = filteredFaqs.length;
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+            const paginatedFaqs = filteredFaqs.slice(startIndex, endIndex);
+            
+            elements.faqList.innerHTML = '';
+            if (paginatedFaqs.length === 0) {
+                 elements.faqList.innerHTML = `<div class="text-center text-gray-500 p-6 bg-white rounded-lg shadow-sm border border-gray-200">No replies found.</div>`;
             } else {
-                 faqsToRender.sort((a, b) => new Date(b[1].lastUpdated) - new Date(a[1].lastUpdated)).forEach(([key, faqData]) => {
-                    elements.faqList.appendChild(renderFaqCard(key, {...faqData, key}));
+                 paginatedFaqs.forEach(([key, faqData]) => {
+                     elements.faqList.appendChild(renderFaqCard(key, {...faqData, key}));
                  });
             }
+
+            renderPaginationControls(totalItems);
+            updateBulkActionBar();
             elements.currentCategoryTitle.textContent = currentCategoryFilter === 'all' ? 'All Replies' : `${currentCategoryFilter}`;
+            lucide.createIcons();
+        }
+
+        function renderPaginationControls(totalItems) {
+            elements.paginationContainer.innerHTML = '';
+            const totalPages = Math.ceil(totalItems / itemsPerPage);
+
+            if (totalPages <= 1) return;
+
+            const createButton = (text, page, isDisabled = false, isActive = false) => {
+                const btn = document.createElement('button');
+                btn.className = `pagination-btn ${isActive ? 'active' : ''}`;
+                btn.innerHTML = text;
+                btn.disabled = isDisabled;
+                btn.addEventListener('click', () => {
+                    currentPage = page;
+                    renderFaqs();
+                });
+                return btn;
+            };
+
+            const wrapper = document.createElement('div');
+            wrapper.className = 'flex items-center gap-2';
+
+            wrapper.appendChild(createButton('<i data-lucide="chevrons-left"></i>', 1, currentPage === 1));
+            wrapper.appendChild(createButton('<i data-lucide="chevron-left"></i>', currentPage - 1, currentPage === 1));
+
+            wrapper.appendChild(document.createRange().createContextualFragment(`<span class="text-sm font-medium text-gray-600">Page ${currentPage} of ${totalPages}</span>`));
+            
+            wrapper.appendChild(createButton('<i data-lucide="chevron-right"></i>', currentPage + 1, currentPage === totalPages));
+            wrapper.appendChild(createButton('<i data-lucide="chevrons-right"></i>', totalPages, currentPage === totalPages));
+
+            elements.paginationContainer.appendChild(wrapper);
             lucide.createIcons();
         }
         
@@ -517,7 +585,7 @@
                         <p class="text-xs text-gray-500 mt-1">${formatTimeAgo(value.timestamp)}</p>
                     </div>
                     <div class="flex items-center gap-2 self-end sm:self-center">
-                        <button data-key="${key}" data-question="${value.question}" class="train-reply-btn bg-indigo-100 text-indigo-700 text-sm font-semibold px-3 py-1.5 rounded-md hover:bg-indigo-200">Create Reply</button>
+                        <button data-key="${key}" data-question="${value.question}" class="train-reply-btn bg-blue-100 text-blue-700 text-sm font-semibold px-3 py-1.5 rounded-md hover:bg-blue-200">Create Reply</button>
                         <button data-key="${key}" class="dismiss-question-btn p-2 hover:bg-gray-100 rounded-md"><i data-lucide="x" class="w-5 h-5 text-gray-500"></i></button>
                     </div>`;
                 elements.unansweredQuestionsList.appendChild(card);
@@ -527,7 +595,7 @@
         
         function renderActivityLog(log) {
             elements.activityFeed.innerHTML = '';
-            const entries = Object.values(log).sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, 15); // Get latest 15
+            const entries = Object.values(log).sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, 15);
 
             if (entries.length === 0) {
                 elements.activityFeed.innerHTML = '<p class="text-sm text-gray-500 text-center py-4">No recent activity.</p>';
@@ -598,10 +666,8 @@
             if(viewName !== 'dashboard') {
                  currentCategoryFilter = 'all';
             }
-            renderCategories(); // To update active states
+            renderCategories();
         }
-        
-        // --- UI ELEMENT CREATION ---
         
         function addReplyBlock(type, data = {}) {
             const block = document.createElement('div');
@@ -609,9 +675,9 @@
             block.dataset.type = type;
             let content;
             switch(type) {
-                case 'text': content = `<textarea class="w-full p-2 border rounded-md text-sm focus:ring-indigo-500 focus:border-indigo-500" placeholder="Text content...">${data.content || ''}</textarea>`; break;
-                case 'image': content = `<input type="url" class="w-full p-2 border rounded-md text-sm focus:ring-indigo-500 focus:border-indigo-500" placeholder="Image URL..." value="${data.url || ''}">`; break;
-                case 'button': content = `<input type="text" class="w-full p-2 border rounded-md text-sm mb-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Button Text..." value="${data.text || ''}"><input type="url" class="w-full p-2 border rounded-md text-sm focus:ring-indigo-500 focus:border-indigo-500" placeholder="Button Redirect URL..." value="${data.url || ''}">`; break;
+                case 'text': content = `<textarea class="w-full p-2 border rounded-md text-sm focus:ring-blue-500 focus:border-blue-500" placeholder="Text content...">${data.content || ''}</textarea>`; break;
+                case 'image': content = `<input type="url" class="w-full p-2 border rounded-md text-sm focus:ring-blue-500 focus:border-blue-500" placeholder="Image URL..." value="${data.url || ''}">`; break;
+                case 'button': content = `<input type="text" class="w-full p-2 border rounded-md text-sm mb-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Button Text..." value="${data.text || ''}"><input type="url" class="w-full p-2 border rounded-md text-sm focus:ring-blue-500 focus:border-blue-500" placeholder="Button Redirect URL..." value="${data.url || ''}">`; break;
                 case 'table': content = createInteractiveTable(data.content).outerHTML; break;
             }
             block.innerHTML = `
@@ -654,25 +720,25 @@
 
         function renderFaqCard(key, data) {
             const card = document.createElement('div');
-            card.className = `faq-card bg-white rounded-lg shadow-sm border p-4 flex gap-4 ${getCategoryColor(data.category || 'General')}`;
+            card.className = `faq-card bg-white rounded-lg shadow-sm border p-3 flex gap-3 ${getCategoryColor(data.category || 'General')}`;
             card.dataset.key = key;
 
             const replyBlocks = data.reply || [];
-            let previewHTML = '<p class="text-gray-500 text-sm">No reply content.</p>';
+            let previewHTML = '<p class="text-gray-500 text-xs">No reply content.</p>';
 
             if (replyBlocks.length > 0) {
                 const firstBlock = replyBlocks[0];
                 previewHTML = '';
                 switch(firstBlock.type) {
-                    case 'text': previewHTML = `<p class="text-gray-600 text-sm italic">"${(firstBlock.content || '').substring(0, 150)}..."</p>`; break;
-                    case 'image': previewHTML = `<img src="${firstBlock.url}" alt="Image preview" class="max-h-24 rounded border border-gray-200" onerror="this.style.display='none'">`; break;
+                    case 'text': previewHTML = `<p class="text-gray-600 text-xs italic">"${(firstBlock.content || '').substring(0, 100)}..."</p>`; break;
+                    case 'image': previewHTML = `<img src="${firstBlock.url}" alt="Image preview" class="max-h-16 rounded border border-gray-200" onerror="this.style.display='none'">`; break;
                     case 'button': previewHTML = `<span class="preview-button">${firstBlock.text || 'Button'}</span>`; break;
                     case 'table':
-                        const rows = (firstBlock.content || '').split('\n').slice(0, 3);
+                        const rows = (firstBlock.content || '').split('\n').slice(0, 2);
                         let tableHTML = '<table class="preview-table border border-collapse border-gray-300"><tbody>';
                         rows.forEach((rowStr, rowIndex) => {
                             tableHTML += '<tr>';
-                            rowStr.split(',').slice(0, 3).forEach(cellStr => {
+                            rowStr.split(',').slice(0, 2).forEach(cellStr => {
                                 tableHTML += `<${rowIndex === 0 ? 'th' : 'td'} class="border border-gray-200 p-1">${cellStr}</${rowIndex === 0 ? 'th' : 'td'}>`;
                             });
                             tableHTML += '</tr>';
@@ -685,20 +751,20 @@
 
             card.innerHTML = `
                 <div><input type="checkbox" class="custom-checkbox mt-1" data-key="${key}" ${selectedReplies.has(key) ? 'checked' : ''}></div>
-                <div class="flex-1 flex flex-col gap-3">
+                <div class="flex-1 flex flex-col gap-2">
                     <div class="flex justify-between items-start">
                         <div class="flex-1 min-w-0">
-                            <h4 class="font-semibold text-gray-800" title="${data.question}">${data.question}</h4>
+                            <h4 class="font-medium text-sm text-gray-800" title="${data.question}">${data.question}</h4>
                             <div class="flex items-center flex-wrap text-xs text-gray-500 mt-1 gap-x-3 gap-y-1">
                                 <span><i data-lucide="box" class="inline w-3 h-3 mr-1"></i>${replyBlocks.length} Block${replyBlocks.length !== 1 ? 's' : ''}</span>
                                 <span title="Views"><i data-lucide="eye" class="inline w-3 h-3 mr-1"></i>${data.views || 0}</span>
                                 ${data.lastUpdated ? `<span><i data-lucide="clock" class="inline w-3 h-3 mr-1"></i>${formatTimeAgo(data.lastUpdated)}</span>` : ''}
                             </div>
                         </div>
-                        <div class="flex items-center space-x-1 flex-shrink-0 ml-2">
-                            <button class="clone-faq-btn p-2 rounded-md hover:bg-gray-100" title="Clone"><i data-lucide="copy" class="w-4 h-4 text-gray-600"></i></button>
-                            <button class="edit-faq-btn p-2 rounded-md hover:bg-gray-100" title="Edit"><i data-lucide="edit" class="w-4 h-4 text-gray-600"></i></button>
-                            <button class="delete-faq-btn p-2 rounded-md hover:bg-red-100" title="Delete"><i data-lucide="trash-2" class="w-4 h-4 text-red-500"></i></button>
+                        <div class="flex items-center space-x-0 flex-shrink-0 ml-2">
+                            <button class="clone-faq-btn p-1.5 rounded-md hover:bg-gray-100" title="Clone"><i data-lucide="copy" class="w-4 h-4 text-gray-600"></i></button>
+                            <button class="edit-faq-btn p-1.5 rounded-md hover:bg-gray-100" title="Edit"><i data-lucide="edit" class="w-4 h-4 text-gray-600"></i></button>
+                            <button class="delete-faq-btn p-1.5 rounded-md hover:bg-red-100" title="Delete"><i data-lucide="trash-2" class="w-4 h-4 text-red-500"></i></button>
                         </div>
                     </div>
                     <div class="reply-preview-content w-full">${previewHTML}</div>
@@ -725,7 +791,6 @@
                 elements.bulkActionBar.classList.add('hidden');
             }
         }
-
 
         // --- EVENT LISTENERS ---
         elements.addNewCategoryBtn.addEventListener('click', () => {
@@ -809,6 +874,7 @@
                  e.preventDefault();
                  switchView('dashboard');
                  currentCategoryFilter = categoryItem.dataset.category;
+                 currentPage = 1;
                  selectedReplies.clear();
                  renderFaqs();
                  renderCategories();
@@ -826,8 +892,8 @@
             if (dismissBtn) {
                 const key = dismissBtn.dataset.key;
                 showConfirmation('Dismiss Question?', 'This will permanently remove the question from the training list.', () => {
-                     remove(ref(db, `unansweredQuestions/${key}`));
-                     showToast('Question dismissed.', 'error');
+                    remove(ref(db, `unansweredQuestions/${key}`));
+                    showToast('Question dismissed.', 'error');
                 });
             }
 
@@ -927,7 +993,18 @@
             });
         });
         
-        // --- NEW, ROBUST DRAWER LOGIC ---
+        elements.sortBySelect.addEventListener('change', (e) => {
+            sortBy = e.target.value;
+            currentPage = 1;
+            renderFaqs();
+        });
+
+        elements.itemsPerPageSelect.addEventListener('change', (e) => {
+            itemsPerPage = parseInt(e.target.value, 10);
+            currentPage = 1;
+            renderFaqs();
+        });
+
         let isDrawerOpen = false;
         
         function setDrawerState(isOpen) {
@@ -955,7 +1032,6 @@
             setDrawerState(!isDrawerOpen);
         }
 
-        // --- Event Listeners & Initial Setup ---
         elements.menuBtn.addEventListener('click', toggleDrawer);
         elements.drawerOverlay.addEventListener('click', () => setDrawerState(false));
         
@@ -969,16 +1045,14 @@
         elements.confirmCancelBtn.addEventListener('click', hideConfirmation);
         elements.searchInput.addEventListener('input', renderFaqs);
 
-        // Initial Page Load Setup
         switchView('dashboard');
         
         const mediaQuery = window.matchMedia('(min-width: 768px)');
         function handleScreenChange(e) {
-            setDrawerState(e.matches); // Open on desktop, close on mobile
+            setDrawerState(e.matches);
         }
         mediaQuery.addEventListener('change', handleScreenChange);
         
-        // Initial setup call
         handleScreenChange(mediaQuery);
 
     </script>
