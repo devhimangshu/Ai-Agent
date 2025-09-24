@@ -378,9 +378,6 @@
         // 1. The frontend sends the user's query to your backend service.
         // 2. The backend service adds the secret API key and calls the Gemini API.
         // 3. The backend service returns the response to the frontend.
-        //
-        // I have replaced your keys with placeholders. You should replace them with your actual keys
-        // ONLY for local testing, and implement a backend solution for production.
         
         const firebaseConfig = {
           apiKey: "AIzaSyCICnKBs4Ko8oiOkoB2Jg_QRP8IqqTzmWo",
@@ -650,11 +647,11 @@
         }
 
         /**
-         * A simple check to see if a query is basic small talk, avoiding unnecessary API calls.
+         * Checks if a query is trivial (greetings, simple talk) to avoid logging it as unanswered.
          * @param {string} userText The user's input.
-         * @returns {boolean} True if the query is basic.
+         * @returns {boolean} True if the query is trivial.
          */
-        function isBasicQuery(userText) {
+        function isTrivialQuery(userText) {
             const normalizedText = userText.toLowerCase().trim();
             const conversationalKeywords = [ 'hello', 'hi', 'hey', 'how are you', 'good morning', 'good afternoon', 'good evening', 'bye', 'goodbye', 'see you', 'thanks', 'thank you' ];
             if (conversationalKeywords.some(keyword => normalizedText.startsWith(keyword))) return true;
@@ -666,6 +663,39 @@
             if (mathRegex.test(normalizedText) && normalizedText.match(/[\+\-\*\/]/)) return true;
             
             return false;
+        }
+
+        /**
+         * Generates a contextual response for time-based greetings.
+         * @param {string} userText The user's input.
+         * @returns {string|null} A response string if it's a greeting, otherwise null.
+         */
+        function getGreetingResponse(userText) {
+            const normalizedText = userText.toLowerCase().trim();
+            const hour = new Date().getHours();
+            
+            let timeOfDay;
+            if (hour >= 5 && hour < 12) timeOfDay = 'morning';
+            else if (hour >= 12 && hour < 17) timeOfDay = 'afternoon';
+            else timeOfDay = 'evening';
+
+            if (normalizedText.includes('good morning')) {
+                return timeOfDay === 'morning' ? `Good morning! How can we help you today?` : `Good ${timeOfDay}! It's actually the ${timeOfDay} here in Siliguri. How can I assist you?`;
+            }
+            if (normalizedText.includes('good afternoon')) {
+                return timeOfDay === 'afternoon' ? `Good afternoon! What can we do for you?` : `Good ${timeOfDay}! It's currently the ${timeOfDay} here. How may I help?`;
+            }
+            if (normalizedText.includes('good evening')) {
+                return timeOfDay === 'evening' ? `Good evening! How can we assist you?` : `Good ${timeOfDay}! It's actually ${timeOfDay} here right now. What can I do for you?`;
+            }
+            if (['hello', 'hi', 'hey'].some(g => normalizedText.startsWith(g))) {
+                return `Hello there! How can I help you?`;
+            }
+            if (['thanks', 'thank you'].some(g => normalizedText.startsWith(g))) {
+                return `You're welcome! Is there anything else we can help with?`;
+            }
+            
+            return null; // Not a greeting we handle specially
         }
         
         /**
@@ -679,11 +709,12 @@
         async function callGeminiAPI(userQuery, dbContextArray, retries = 3, delay = 1000) {
             const systemPrompt = `You are ${botConfig.name}, a helpful and friendly AI assistant representing ${botConfig.company}. You are an employee based in our ${botConfig.location} office.
 - **Your Persona:** Speak as a representative of the company. Use "we," "our," and "us" when talking about ${botConfig.company}. For example, instead of "At Blue Minch, they offer...", you should say "We offer...".
+- **Be Concise:** Keep your answers short and to the point. Get straight to the answer without unnecessary conversational fluff.
 - Your main goal is to answer the user's question accurately and conversationally, with confidence.
 - You are provided with context from our internal knowledge base. Base your answer primarily on this context.
 - If the context doesn't fully answer the question, seamlessly integrate your general knowledge to provide a complete and helpful response. Avoid phrases like "according to my knowledge base" or "I couldn't find...".
 - If you truly cannot answer the question, politely state that you don't have the information at the moment but that you can ask a human colleague.
-- Format your responses using markdown. Use bold, italics, lists, tables, and emojis to make the response engaging.
+- Format your responses using markdown. Use bold, italics, lists, and tables to make the response engaging.
 - IMPORTANT: For emails, use the markdown format [email@example.com](mailto:email@example.com). For phone numbers, use [123-456-7890](tel:1234567890). For websites, use [Website Name](https://example.com).
 - **When creating lists, be concise. For example, instead of "You can contact us via email at...", just write "* Email: [contact@blueminch.com](mailto:contact@blueminch.com)".**
 - Always be polite and helpful. Handle greetings, small talk, and other conversational questions naturally.
@@ -794,6 +825,19 @@
                 return;
             }
 
+            // Handle hardcoded, time-aware greetings first for a faster, more intelligent response.
+            const greetingResponse = getGreetingResponse(userText);
+            if (greetingResponse) {
+                removeThinkingIndicator();
+                const finalHTML = createBotMessageHTML('');
+                const messageElContainer = addMessage('bot', finalHTML);
+                const streamingTarget = messageElContainer.querySelector('.message-content');
+                if (streamingTarget) {
+                    streamResponse(streamingTarget, greetingResponse);
+                }
+                return; // Exit early, no need for AI call.
+            }
+
             const relevantFaqs = findRelevantFaqs(userText);
             const bestMatch = relevantFaqs.length > 0 ? relevantFaqs[0] : null;
             
@@ -819,8 +863,8 @@
                 setGeneratingState(false);
             }
 
-            // Log unanswered questions to Firebase for later review
-            if (!bestMatch && !isBasicQuery(userText)) {
+            // Log unanswered questions to Firebase for later review, but only if they're not trivial.
+            if (!bestMatch && !isTrivialQuery(userText)) {
                 const unansweredRef = push(ref(db, 'unansweredQuestions'));
                 set(unansweredRef, { question: userText, timestamp: new Date().toISOString() });
             }
@@ -942,9 +986,4 @@
     </script>
 </body>
 </html>
-
-
-
-
-
 
